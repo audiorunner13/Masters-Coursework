@@ -69,7 +69,7 @@ ggplot(data = foul_ball_danger) +
 # Foul Ball Zones Chart 
 The image below shows foul ball zones supported by the data and the black arc shows current foul ball safety barrier erected by all MLB stadiums.  All zones and barrier in the image are approximations.
 ```{r}
-fb_zones_img <- "/Users/Audiorunner13/CUNY MSDS Course Work/DATA607 Spring 2021/Week1/Assignment/images/fb_zones.jpg"
+fb_zones_img <- "https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week1/Assignment/images/fb_zones.jpg"
 # attr(fb_zones_img, "info")
 include_graphics(fb_zones_img)
 ```
