@@ -73,6 +73,7 @@ fb_zones_img <- "https://raw.githubusercontent.com/audiorunner13/Masters-Coursew
 # attr(fb_zones_img, "info")
 include_graphics(fb_zones_img)
 ```
+
 # The number of foul balls per zone.
 
 The scatterplots below show the number of foul balls hit into each zone by foul type.  A few things to note.
