@@ -1,0 +1,135 @@
+---
+title: "Assignment2 - Sql and R"
+subtitle: "DATA607 - Acquisition of Data and Management - Instructor: Andrew Catlin"
+author: "Author: Peter Gatica"
+date: "Date: 2/12/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r message=FALSE}
+# Load needed libraries
+library(devtools)
+library(tidyverse)
+library(RCurl)
+library(plyr)
+library(knitr)
+library(RMySQL)
+```
+
+Function call to MySQL db to connect and use the return command in a function.
+
+```{r MySQL Connect Function}
+conn.MyQL <- function(db_parms)
+{
+  db_conn <- dbConnect(MySQL(), user=db_user, password=db_password, dbname=db_name, host=db_host)
+  return(db_conn)
+}
+```
+
+Source the credentials parameter file from your local directory.  Do not store in github repository since R has no encryption capability.
+
+```{r Read the user MySQl Parameter credentials file}
+filename <- "Use Your Local Parameter File"
+db_parms <- read.csv(filename)
+```
+
+Set the login application credential to pass to the db log in function
+
+```{r Set  up DB parms}
+db_user = db_parms$db_user
+db_password = db_parms$db_password
+db_name = db_parms$db_name
+db_host = db_parms$db_host
+db_result_set = ""
+
+db_parms <- c(db_user, db_password, db_name, db_host, db_result_set)
+```
+
+Call the conn.MySql connect function to access the movies database
+
+```{r Connect to the MySQL db}
+db_conn <- conn.MyQL(db_parms)
+```
+
+Use the dbListTables() function to list the tables in the database
+
+```{r List the tables in the movies db}
+dbListTables(db_conn)
+```
+
+Use the dbListFields() function to list the fields in a database table
+
+```{r List the fields in the movie dimension database table}
+dbListFields(db_conn, "movie_dim")
+```
+
+Source the movie dimension file from the movies github repository to load to the movie dimension
+
+```{r Source the movie dimension file to load}
+filename <- getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week2/Assignment/Data/movie_dim.csv")
+movies_dim_df <- read.csv(text=filename)
+movies_dim_df
+```
+
+Drop dimension and fact tables if they exist. Dropping and reloading is only recommended when table size and contents is small.  Write the database tables from their respective data frames.
+
+```{r Drop table and reload the movie dimension}
+if (dbExistsTable(db_conn, "movie_dim"))
+    dbRemoveTable(db_conn, "movie_dim")
+
+dbWriteTable(db_conn, name = "movie_dim", value = movies_dim_df, row.names = FALSE)
+```
+
+Source the customer dimension file from the movies github repository to load to the customer dimension
+
+```{r Source the customer dimension file to load}
+filename <- getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week2/Assignment/Data/customer_dim.csv")
+cust_dim_df <- read.csv(text=filename)
+cust_dim_df
+```
+
+```{r Drop table and reload for customer dimension}
+if (dbExistsTable(db_conn, "customer_dim"))
+    dbRemoveTable(db_conn, "customer_dim")
+
+dbWriteTable(db_conn, name = "customer_dim", value = cust_dim_df, row.names = FALSE)
+```
+
+Source the movie rank survey results file from the movies github repository.
+
+```{r Source the movie rank survey file to load}
+filename <- getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week2/Assignment/Data/movie_rnk_srvy.csv")
+movie_rank_df <- read.csv(text=filename)
+movie_rank_df
+```
+
+```{r Drop table and reload for small fact table}
+if (dbExistsTable(db_conn, "movie_rank"))
+    dbRemoveTable(db_conn, "movie_rank")
+
+dbWriteTable(db_conn, name = "movie_rank", value = movie_rank_df, row.names = FALSE)
+```
+
+Source the sql file in the movies github repositpry.  The sql will extract all survey answers and order by them first name, last name, and movie title and will replace nulls in the AFI 100 Rank field if a movie is not ranked.
+
+```{r source sql file and substitute each new line "\n" with a space}
+filename <- "/Users/Audiorunner13/CUNY MSDS Course Work/DATA607 Spring 2021/Week2/Assignment/Sql/movie_rank_survey.sql"
+db_sql <- readChar(filename, file.info(filename)$size)
+db_sql <- gsub("\n", " ",db_sql)
+db_sql
+```
+
+Execute the sql query joining the fact table to the dimension tables and return all records in the result set.  Specify the number of records to return by adjusting the "n = " argument.
+
+```{r execute sql query and return result set}
+db_data = dbSendQuery(db_conn, db_sql)
+result_set = fetch(db_data, n = -1)
+result_set
+```
+
+The result_set containing the extracted data is a data.frame.
+
+```{r display the class of the result set}
+class(result_set)
+```
