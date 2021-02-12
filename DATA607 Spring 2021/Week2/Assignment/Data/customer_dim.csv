@@ -1,0 +1,7 @@
+cust_id,last_name,first_name,address_1,address_2,city,state,zip_code,etl_nr,etl_dt
+1,Gatica,Peter,12217 White Birch St,,San Antonio,TX,78245,100,2/1/21
+2,Gatica,Leslie,12217 White Birch St,,San Antonio,TX,78245,100,2/1/21
+3,Trevino,Gabriel,783 Menefee,21,San Antonio,TX,78237,110,2/3/21
+4,Rodriguez,Rebecca,300 Queretaro,,San Antonio,TX,78237,110,2/3/21
+5,Salas,Liliana,222 Rolling View Dr,,Boerne,TX,78006,112,2/5/21
+6,Rodriguez,Camila,214 W French Place,2201,Austin,TX,75019,112,2/5/21

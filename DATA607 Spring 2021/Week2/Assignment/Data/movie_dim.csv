@@ -1,0 +1,12 @@
+movie_id,movie_name,release_year,afi_100_rank,actor_1,actor_2,actor_3,etl_nr,etl_dt
+1,The Godfather,1972,2,Marlon Brando,Al Pacino,Diane Keaton,10,1/25/21
+2,Unforgiven,1992,68,Clint Eastwood,Morgan Freeman,Richard Harris,10,1/25/21
+3,The Lord of the Rings: The Fellowship of the Riings,2001,50,Viggo Mortenson,Elijah Woods,Ian McClellan,10,1/25/21
+4,Raiders of The Lost Ark,1981,66,Harrison Ford,Karen Allen,,12,2/1/21
+5,Shawshank Redemption,1994,72,Tim Robbins,Morgan Freeman,Clancy Brown,12,2/1/21
+6,Bull Durham,1988,,Kevin Costner,Susan Sarandon,Tim Robbins,12,2/1/21
+7,Ben-Hur,1959,100,Charelton Heston,Stephen Boyd,Haya Harareet,15,2/5/21
+8,Greyhound,2020,,Tom Hanks,Stephen Graham,Elisabeth Shue,15,2/5/21
+9,News of the World,2020,,Tom Hanks,Helena Zengel,Mare Winningham,15,2/5/21
+10,Midnight Sky,2020,,George Clooney,Felicity Jones,Kyle Chandler,15,2/5/21
+11,The King,2019,,Timothee Chalamet,Joel Edgerton,Robert Pattison,17,2/6/21
