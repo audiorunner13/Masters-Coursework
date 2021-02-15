@@ -27,7 +27,7 @@ conn.MyQL <- function(db_parms)
 }
 ```
 
-Source the credentials parameter file from your local directory.  Do not store in github repository since R has no encryption capability.
+Source the credentials parameter file from your local directory.  Do not store in github repository since R has no encryption capability. 
 
 ```{r Read the user MySQl Parameter credentials file}
 filename <- "Use Your Local Parameter File"
