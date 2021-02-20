@@ -1,0 +1,104 @@
+---
+title: "HomeWork3_string_manip"
+author: "Peter Gatica"
+date: "2/19/2021"
+output: html_document
+---
+---
+title: "Week 3 Assignment"
+author: "Peter Gatica"
+date: "02/19/2021"
+output:
+  html_document:
+    df_print: paged
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r message=FALSE}
+# Load needed libraries
+library(tidyverse)
+library(RCurl)
+library(knitr)
+library(stringr)
+```
+
+### 1. Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS"
+
+```{r Source file from 538 website}
+# Source the file from the 538 Website github repository and set NA strings to 0
+filename <- getURL("https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/majors-list.csv")
+majors_list <- read.csv(text = filename,na.strings = "")
+head(majors_list, 10)
+```
+
+```{r}
+grep(pattern = 'Data', majors_list$Major, value = TRUE, ignore.case = TRUE)
+```
+
+```{r}
+grep(pattern = 'statistics', majors_list$Major, value = TRUE, ignore.case = TRUE)
+```
+
+### 2. Write code that transforms the data below:
+
+```{r}
+filename <- "/Users/Audiorunner13/CUNY MSDS Course Work/DATA607 Spring 2021/Week3/Data/veggies.txt"
+berry_veg <- read.delim(filename, header = FALSE, quote = "")
+berry_veg$V1
+```
+
+```{r}
+berry_veg_vec <-  str_c(berry_veg,sep = ", ")
+writeLines(berry_veg_vec)
+```
+
+### 3. Describe, in words, what these expressions will match
+
+This will return an error since it is not enclosed in quotes
+```{r}
+# str_view(words, (.)\1\1, match = TRUE)
+```
+
+Find all words that have a pair of letters that repeat in any order
+```{r}
+str_view(words,"(.)(.)\\2\\1", match = TRUE)
+```
+
+This will return an error since it is not enclosed in quotes
+```{r}
+#str_view(words,(..)\1, match = TRUE)
+```
+
+Find all words that have a letter that repeats more than once
+```{r}
+str_view(words,"(.).\\1.\\1", match = TRUE)
+```
+
+Find all words that have 3 letters that repeat 0 or more times
+```{r}
+str_view(words,"(.)(.)(.).*\\3\\2\\1", match = TRUE)
+```
+
+### 4. Construct regular expressions to match words that:
+
+Start and end with the same character
+```{r}
+words[str_detect(words, "^a.*a$")]
+```
+
+```{r}
+str_view(words,"^a.*a$", match = TRUE)
+```
+
+Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.)
+```{r}
+x <- c("church", "remember")
+str_view(x,"(..)(..)\\1", match = TRUE)
+```
+
+Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)
+```{r}
+test_word <- c("eleven", "twelve", "twentieth","ninconponop")
+str_view(test_word,"(.)(.)(.).+\\1", match = TRUE)
+```
