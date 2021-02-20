@@ -1,10 +1,4 @@
 ---
-title: "HomeWork3_string_manip"
-author: "Peter Gatica"
-date: "2/19/2021"
-output: html_document
----
----
 title: "Week 3 Assignment"
 author: "Peter Gatica"
 date: "02/19/2021"
@@ -43,8 +37,8 @@ grep(pattern = 'statistics', majors_list$Major, value = TRUE, ignore.case = TRUE
 ### 2. Write code that transforms the data below:
 
 ```{r}
-filename <- "/Users/Audiorunner13/CUNY MSDS Course Work/DATA607 Spring 2021/Week3/Data/veggies.txt"
-berry_veg <- read.delim(filename, header = FALSE, quote = "")
+filename <- getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week3/Data/veggies.txt")
+berry_veg <- read.delim(text=filename, header = FALSE, quote = "")
 berry_veg$V1
 ```
 
