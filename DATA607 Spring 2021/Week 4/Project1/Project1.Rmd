@@ -1,0 +1,172 @@
+---
+title: "Project 1 - Chess Tournament Rankings"
+author: "Peter Gatica"
+date: "02/27/2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Load needed libraries
+```{r message=FALSE}
+# Load needed libraries
+library(devtools)
+library(tidyverse)
+library(RCurl)
+library(plyr)
+library(knitr)
+```
+
+Source the tournamentinfo.txt.  Although I could not figure out how to process this messy file, after so many hours trying I decided to run a few sed commandrs like sed -e 's/\r$//', which get rid of carriage returns.  I also cleaned up the file by using a couple of sustitution commands while editing the file.
+```{r}
+filename <- getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week%204/Project1/Data/tournamentinfo_unix.txt")
+chess_trny <- read.delim(text=filename,header=TRUE, sep = "|")
+chess_trny
+```
+
+select data for the columns from the data file below:
+```{r}
+chess_scores <- chess_trny[, c("PairNum", "PlayerName", "Total","Round","Round.1","Round.2","Round.3","Round.4","Round.5","Round.6","State","USCF.ID...Rtg..Pre.Post.","N")]
+chess_scores
+```
+
+Rename the column names
+```{r}
+names(chess_scores) <- c("Pair_Num","Player_Name","Total_Points","Round_1","Round_2","Round_3","Round_4","Round_5","Round_6","Round_7","State","USCF_ID_Rtg_Pre_Post","N")
+chess_scores
+```
+
+Prep initial out file
+```{r}
+chess_results <- chess_scores[,c("Pair_Num","Player_Name","State","Total_Points")]
+chess_results
+```
+
+create a vector player rankings
+```{r}
+ranking <- as.numeric(str_sub(chess_scores$USCF_ID_Rtg_Pre_Post, 15, 19))
+ranking
+```
+
+Add the ranking(rating) to the our data.frame
+```{r}
+chess_results1 <- chess_results
+chess_results1$Rating <- ranking
+chess_results1
+```
+
+Function to calculate the opponents' average chess ranking
+```{r Calculate Avg Rankin}
+calc.avg.rtg <- function(loop_num)
+{
+  avg.rtg <- 0
+  tot_player_opp_rtg <- 0
+  i = 1
+  for (i in 1:7) {
+     if (i==1) {
+       game <- chess_scores[chess_scores$Pair_Num == loop_num,  c("Round_1")]
+       game_result <- str_sub(game, 1, 1)
+       if (game_result == 'W' | game_result == "L" | game_result == "D") {
+          player_opp <- str_sub(game, 4,5)
+          player_opp_rtg <- chess_results1[chess_results1$Pair_Num == as.numeric(player_opp),  c("Rating")]
+          tot_player_opp_rtg = tot_player_opp_rtg + player_opp_rtg
+          player_opp_rtg = 0
+       }
+     }
+     if (i==2){
+           game <- chess_scores[chess_scores$Pair_Num == loop_num,  c("Round_2")]
+           game_result <- str_sub(game, 1, 1)
+           if (game_result == 'W' | game_result == "L" | game_result == "D") {
+             player_opp <- str_sub(game, 4,5)
+             player_opp_rtg <- chess_results1[chess_results1$Pair_Num == as.numeric(player_opp),  c("Rating")]
+             tot_player_opp_rtg = tot_player_opp_rtg + player_opp_rtg
+             player_opp_rtg = 0
+           }
+     }
+     if (i==3){
+           game <- chess_scores[chess_scores$Pair_Num == loop_num,  c("Round_3")]
+           game_result <- str_sub(game, 1, 1)
+           if (game_result == 'W' | game_result == "L" | game_result == "D") {
+             player_opp <- str_sub(game, 4,5)
+             player_opp_rtg <- chess_results1[chess_results1$Pair_Num == as.numeric(player_opp),  c("Rating")]
+             tot_player_opp_rtg = tot_player_opp_rtg + player_opp_rtg
+             player_opp_rtg = 0
+           }
+     }
+     if (i==4){
+        game <- chess_scores[chess_scores$Pair_Num == loop_num,  c("Round_4")]
+        game_result <- str_sub(game, 1, 1)
+        if (game_result == 'W' | game_result == "L" | game_result == "D") {
+          player_opp <- str_sub(game, 4,5)
+          player_opp_rtg <- chess_results1[chess_results1$Pair_Num == as.numeric(player_opp),  c("Rating")]
+          tot_player_opp_rtg = tot_player_opp_rtg + player_opp_rtg
+          player_opp_rtg = 0
+        }
+     }
+     if (i==5){
+       game <- chess_scores[chess_scores$Pair_Num == loop_num,  c("Round_5")]
+       game_result <- str_sub(game, 1, 1)
+       if (game_result == 'W' | game_result == "L" | game_result == "D") {
+         player_opp <- str_sub(game, 4,5)
+         player_opp_rtg <- chess_results1[chess_results1$Pair_Num == as.numeric(player_opp),  c("Rating")]
+         tot_player_opp_rtg = tot_player_opp_rtg + player_opp_rtg
+         player_opp_rtg = 0
+       }
+     }
+     if (i==6){
+       game <- chess_scores[chess_scores$Pair_Num == loop_num,  c("Round_6")]
+       game_result <- str_sub(game, 1, 1)
+       if (game_result == 'W' | game_result == "L" | game_result == "D") {
+         player_opp <- str_sub(game, 4,5)
+         player_opp_rtg <- chess_results1[chess_results1$Pair_Num == as.numeric(player_opp),  c("Rating")]
+         tot_player_opp_rtg = tot_player_opp_rtg + player_opp_rtg
+         player_opp_rtg = 0
+       }
+     }
+     if (i==7){
+       game <- chess_scores[chess_scores$Pair_Num == loop_num,  c("Round_7")]
+       game_result <- str_sub(game, 1, 1)
+       if (game_result == 'W' | game_result == "L" | game_result == "D") {
+         player_opp <- str_sub(game, 4,5)
+         player_opp_rtg <- chess_results1[chess_results1$Pair_Num == as.numeric(player_opp),  c("Rating")]
+         tot_player_opp_rtg = tot_player_opp_rtg + player_opp_rtg
+         player_opp_rtg = 0
+       }
+     }
+  }  
+  avg.rtg <- tot_player_opp_rtg / 7
+  return(avg.rtg)
+}
+```
+
+Call the function to calculate the opponents' average chess ranking
+```{r}
+avg_rate_all_vec <- c()
+loop_num <- nrow(chess_scores) + 1
+x <- 1
+while(x < loop_num)
+{
+  avg_rate <- calc.avg.rtg(x)
+  avg_rate_all_vec <- rbind(avg_rate_all_vec, avg_rate)
+  x <- x + 1
+}
+```
+
+
+Add the opponents average ranking
+```{r}
+chess_results1_fin <- chess_results1
+chess_results1_fin$Avg_Opp_Rank <- round(avg_rate_all_vec,0)
+chess_results1_fin
+```
+
+Write output file to a csv file.
+```{r Write a csv file to your directory}
+out_file <- "/Users/Audiorunner13/CUNY MSDS Course Work/DATA607 Spring 2021/Week4/Project1/Data/chess_results.csv"
+write_csv(chess_results1_fin,out_file)
+```
+
