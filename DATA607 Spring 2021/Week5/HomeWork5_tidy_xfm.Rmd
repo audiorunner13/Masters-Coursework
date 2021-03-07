@@ -1,0 +1,120 @@
+---
+title: "Week 5Assignment - Tidying and Transforming Data"
+author: "Peter Gatica"
+date: "03/06/2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+#
+Load needed libraries
+```{r message=FALSE}
+library(devtools)
+library(tidyverse)
+library(RCurl)
+library(knitr)
+```
+#
+Source the untidy data source for cleansing and transformation
+```{r Source untidy data airline file from github repo}
+filename <- "/Users/Audiorunner13/CUNY MSDS Course Work/DATA607 Spring 2021/Week5/Data/airline_untidy_data.csv"
+(airline_untidy <- read.csv(filename, sep = ","))
+```
+
+Use tidyr gather function to gather the values that are used as columns and make them correctly name the column that those values represent. In this case the values represent the airport.
+```{r use gather function to create correct column name from values}
+(airline_tidy <- airline_untidy %>%
+  gather(`Los.Angeles`,`Phoenix`,`San.Diego`,`San.Franscisco`,`Seattle`, key = "airport",value = "count"))
+```
+
+Use the str_replace() function to look for the "." in the airport name and replace with a blank space.
+```{r }
+(airline_tidy$airport <- str_replace(airline_tidy$airport,"\\.", " "))
+```
+
+Every other row starting at record two is missing the airport value for that record.  Use a while loop and if statement to identify those rows that need the airport name added.
+```{r add missing airline name to records}
+x <- 2
+while (x < 21){
+  if (x == 2 | x == 6 | x == 10 | x == 14 | x == 18){
+    airline_tidy$airline[x] = 'Alaska'
+  }
+  if (x == 4 | x == 8 | x == 12 | x == 16 | x == 20){
+    airline_tidy$airline[x] = 'Amwest'
+  }
+  x <- x + 2
+}
+airline_tidy
+```
+
+Use the filter() function to extract only those records with a delayed status.
+```{r use filter function to extract delayed records}
+(airline_delays <- airline_tidy %>% filter(arr_status == 'delayed'))
+```
+
+Create a data.frame of Alaska airline delayed records to perform some analysis on.
+```{r use pipe and filter function to create Alaska extract}
+(airline.alaska <- airline_delays %>% filter(airline == "Alaska"))
+```
+
+Calculate the total count of delayed flights and the percentage of delayed flights by location for Alaska airlines.
+
+One can see that Alaska Airlines at the Seattle airport experiences the most delayed flights.  Once explanation for that may be weather.  The Seattle area is known for the high amount of rainfall every year.
+```{r calculate proporation delayed to total delayed}
+(airline.alaska <- group_by(airline.alaska, arr_status, sum(count), count / sum(count)))
+```
+
+Use the rename() to tidy up the column names in the data.frame
+```{r}
+(airline.alaska <- rename(airline.alaska,"Airline"="airline","Status"="arr_status","Location"="airport","DelayedCount"="count","TotalDelayCount"="sum(count)","PercentageDelay"="count/sum(count)"))
+```
+
+Calculate the median and mean for delayed Alaska airlines delayed flights.
+For analytic purposes, I would probably use the median of 62 to determine reliability of Alaska airline arriving on time and from a performance standpoint.  Although I would see the Seattle delay count as an outlier because it is 3 times larger than the next largest delay count, I would definitely use that indicator if I am flying into or departing from the Seattle airport.
+```{r}
+(Delay.mean <- mean(airline.alaska$DelayedCount))
+(delay.median <- median(airline.alaska$DelayedCount))
+```
+
+```{r summary of the extract}
+summary(airline.alaska)
+```
+
+Perform the same cleansing, subsetting and calculations for Amwest Airlines.
+```{r}
+(airline.amwest <- airline_delays %>% filter(airline == "Amwest"))
+```
+
+```{r}
+(airline.amwest <- group_by(airline.amwest, arr_status, sum(count), count / sum(count)))
+```
+
+```{r}
+(airline.amwest <- rename(airline.amwest,"Airline"="airline","Status"="arr_status","Location"="airport","DelayedCount"="count","TotalDelayCount"="sum(count)","PercentageDelay"="count/sum(count)"))
+```
+
+Calculate the median and mean for delayed Amwest airlines delayed flights.
+For analytic purposes, I would probably use the median of 62 to determine reliability of Amwest airlines arriving on time and from a performance standpoint.  Although I would see the Phoenix delay count as an outlier because it is 3 times larger than the next largest delay count, I would definitely use that indicator if I am flying into or departing from the Phoenix airport.  Phoenix is a major hub and a very busy airport.
+```{r Calculate the median and mean}
+(Delay.mean <- mean(airline.amwest$DelayedCount))
+(delay.median <- median(airline.amwest$DelayedCount))
+```
+
+```{r}
+summary(airline.amwest)
+```
+
+
+```{r}
+total.alaska <- airline_tidy %>% filter(airline == "Alaska")
+max(total.alaska$count)
+```
+
+```{r}
+total.amwest <- airline_tidy %>% filter(airline == "Amwest")
+max(total.amwest$count)
+```
+
+Final thought on the performance of both airlines.  While comparing the Alaska and Amwest airlines performance it may appear by their respective medians and means that Alaska experiences fewer delays than Amwest.  However, when you look at the overall total flights for each airline individually Amwest flew over 2.5 times the number of flights into those locations.
+
