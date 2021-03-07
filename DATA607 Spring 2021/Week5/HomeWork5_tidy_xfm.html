@@ -1662,8 +1662,8 @@ library(knitr)</code></pre>
 <div id="section-1" class="section level1">
 <h1></h1>
 <p>Source the untidy data source for cleansing and transformation</p>
-<pre class="r"><code>filename &lt;- &quot;/Users/Audiorunner13/CUNY MSDS Course Work/DATA607 Spring 2021/Week5/Data/airline_untidy_data.csv&quot;
-(airline_untidy &lt;- read.csv(filename, sep = &quot;,&quot;))</code></pre>
+<pre class="r"><code>filename &lt;- getURL(&quot;https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week5/Data/airline_untidy_data.csv&quot;)
+(airline_untidy &lt;- read.delim(text=filename,header=TRUE, sep = &quot;,&quot;))</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":["airline"],"name":[1],"type":["chr"],"align":["left"]},{"label":["arr_status"],"name":[2],"type":["chr"],"align":["left"]},{"label":["Los.Angeles"],"name":[3],"type":["int"],"align":["right"]},{"label":["Phoenix"],"name":[4],"type":["int"],"align":["right"]},{"label":["San.Diego"],"name":[5],"type":["int"],"align":["right"]},{"label":["San.Franscisco"],"name":[6],"type":["int"],"align":["right"]},{"label":["Seattle"],"name":[7],"type":["dbl"],"align":["right"]}],"data":[{"1":"Alaska","2":"on time","3":"497","4":"221","5":"212","6":"503","7":"1841"},{"1":"","2":"delayed","3":"62","4":"12","5":"20","6":"102","7":"305"},{"1":"Amwest","2":"on time","3":"694","4":"4840","5":"383","6":"320","7":"201"},{"1":"","2":"delayed","3":"117","4":"415","5":"65","6":"129","7":"61"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}

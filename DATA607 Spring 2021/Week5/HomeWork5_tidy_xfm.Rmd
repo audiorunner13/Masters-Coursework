@@ -3,9 +3,9 @@ title: "Week 5Assignment - Tidying and Transforming Data"
 author: "Peter Gatica"
 date: "03/06/2021"
 output:
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 #
 Load needed libraries
@@ -18,8 +18,8 @@ library(knitr)
 #
 Source the untidy data source for cleansing and transformation
 ```{r Source untidy data airline file from github repo}
-filename <- "/Users/Audiorunner13/CUNY MSDS Course Work/DATA607 Spring 2021/Week5/Data/airline_untidy_data.csv"
-(airline_untidy <- read.csv(filename, sep = ","))
+filename <- getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week5/Data/airline_untidy_data.csv")
+(airline_untidy <- read.delim(text=filename,header=TRUE, sep = ","))
 ```
 
 Use tidyr gather function to gather the values that are used as columns and make them correctly name the column that those values represent. In this case the values represent the airport.
