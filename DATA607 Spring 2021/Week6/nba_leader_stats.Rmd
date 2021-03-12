@@ -1,0 +1,134 @@
+---
+title: "Project 2 - NBA Stats"
+author: "Peter Gatica"
+date: "03/12/2021"
+output:
+  html_document:
+    df_print: paged
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE}
+# Load needed libraries
+library(devtools)
+library(tidyverse)
+library(RCurl)
+library(plyr)
+library(knitr)
+```
+
+```{r}
+filename <- "https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week6/Data/NBA_Player_Stats.txt"
+nba_player_stats <- readLines(filename)
+nba_player_stats[1:19]
+```
+
+```{r}
+nba_player_rows <- c()
+```
+
+```{r}
+for (i in seq(11, 1486, 3)) {
+  row1 <- unlist(strsplit(nba_player_stats[i], '\\\t'))
+  player_row <- as.integer(gsub(' ', '', row1[1]))
+  
+  row2 <- unlist(strsplit(nba_player_stats[i+1], '\\\t'))
+  player_name <- str_to_title(str_trim(row2[1]))
+
+  row3 <- unlist(strsplit(nba_player_stats[i+2], '\\\t'))
+  games_played <- as.numeric(gsub(' ', '', row3[2]))
+  min_played <- as.numeric(gsub(' ', '', row3[3]))
+  pts_scored <- as.numeric(gsub(' ', '', row3[4]))
+  fg_made <- as.numeric(gsub(' ', '', row3[5]))
+  fg_attempted <- as.numeric(gsub(' ', '', row3[6]))
+  fg_perc <- as.numeric(gsub(' ', '', row3[7]))
+  three_pts_made <- as.numeric(gsub(' ', '', row3[8]))
+  three_pts_attempted <- as.numeric(gsub(' ', '', row3[9]))
+  three_perc <- as.numeric(gsub(' ', '', row3[10]))
+  ft_made <- as.numeric(gsub(' ', '', row3[11]))
+  ft_attempted <- as.numeric(gsub(' ', '', row3[12]))
+  ft_perc <- as.numeric(gsub(' ', '', row3[13]))
+  
+  nba_player_rows <- rbind(nba_player_rows, c(player_row, player_name, games_played, min_played, pts_scored, fg_made, fg_attempted, fg_perc, three_pts_made, three_pts_attempted, three_perc, ft_made, ft_attempted, ft_perc))
+}
+```
+
+```{r}
+nba_player_stats_df <- data.frame(nba_player_rows)
+colnames(nba_player_stats_df) <- c("#","Player","games_played","min_played","pts_scored","fg_made","fg_attemps","fg_pct","three_pts_made","three_pts_attempts","three_pts_pct","ft_made","ft_attemps","ft_pct")
+head(nba_player_stats_df,50)
+```
+
+```{r}
+nba_player_stats_df$games_played <- as.integer(nba_player_stats_df$games_played)
+nba_player_stats_df$min_played <- as.integer(nba_player_stats_df$min_played)
+nba_player_stats_df$pts_scored <- as.integer(nba_player_stats_df$pts_scored)
+nba_player_stats_df$fg_made <- as.integer(nba_player_stats_df$fg_made)
+nba_player_stats_df$fg_attemps <- as.integer(nba_player_stats_df$fg_attemps)
+nba_player_stats_df$fg_pct <- as.double(nba_player_stats_df$fg_pct)
+nba_player_stats_df$three_pts_made <- as.integer(nba_player_stats_df$three_pts_made)
+nba_player_stats_df$three_pts_attempts <- as.integer(nba_player_stats_df$three_pts_attempts)
+nba_player_stats_df$three_pts_pct <- as.double(nba_player_stats_df$three_pts_pct)
+nba_player_stats_df$ft_made <- as.integer(nba_player_stats_df$ft_made)
+nba_player_stats_df$ft_attemps <- as.integer(nba_player_stats_df$ft_attemps)
+nba_player_stats_df$ft_pct <- as.double(nba_player_stats_df$ft_pct)
+
+head(nba_player_stats_df,10)
+```
+
+
+```{r}
+nba_3p_stats <- nba_player_stats_df %>% filter(three_pts_attempts >= 100) %>% select('Player','games_played','three_pts_made', 'three_pts_attempts','three_pts_pct') 
+head(nba_3p_leaders <- nba_3p_stats[with(nba_3p_stats, order(-three_pts_pct)),],10)
+```
+
+```{r}
+head(nba_3p_leaders,5) %>%
+  ggplot(aes(x=reorder(Player,three_pts_attempts),y=three_pts_attempts,fill=Player)) + 
+  geom_bar(stat = 'identity',position=position_dodge())   +
+  geom_text(aes(label=three_pts_pct), vjust=1.6, color="white",
+            position = position_dodge(0.9), size=3.5) +
+
+  labs(y = ("3 Point Attempts"),x = ("Player"),
+      title = ("Percentage of 3 Pointers Made by 3 Point Attempts Taken by Player")  ) +
+  scale_fill_brewer(palette="Paired") +
+  theme_minimal()
+```
+
+```{r}
+nba_fg_stats <- nba_player_stats_df %>% filter(fg_attemps >= 100) %>% select('Player','games_played','fg_made', 'fg_attemps','fg_pct') 
+head(nba_fg_leaders <- nba_fg_stats[with(nba_fg_stats, order(-fg_pct)),],10)
+```
+
+```{r}
+head(nba_fg_stats,5) %>%
+  ggplot(aes(x=reorder(Player,fg_attemps),y=fg_attemps,fill=Player)) + 
+  geom_bar(stat = 'identity',position=position_dodge())   +
+  geom_text(aes(label=fg_pct), vjust=1.6, color="white",
+            position = position_dodge(0.9), size=6.0) +
+
+  labs(y = ("Field Goal Attempts"),x = ("Player"),
+      title = ("Percentage of Field Goals Made by Field Goal Attempts Taken by Player")  ) +
+  scale_fill_brewer(palette="Paired") +
+  theme_minimal()
+```
+
+```{r}
+nba_ft_stats <- nba_player_stats_df %>% filter(ft_attemps >= 100) %>% select('Player','games_played','ft_made', 'ft_attemps','ft_pct') 
+head(nba_ft_leaders <- nba_ft_stats[with(nba_ft_stats, order(-ft_pct)),],10)
+```
+
+```{r}
+head(nba_ft_stats,5) %>%
+  ggplot(aes(x=reorder(Player,ft_attemps),y=ft_attemps,fill=Player)) + 
+  geom_bar(stat = 'identity',position=position_dodge())   +
+  geom_text(aes(label=ft_pct), vjust=1.6, color="white",
+            position = position_dodge(0.9), size=3.5) +
+
+  labs(y = ("Free Throw Attempts"),x = ("Player Name"),
+      title = ("Percentage of Free Throws Made by Free Throw Attempts Taken by Player")  ) +
+  scale_fill_brewer(palette="Paired") +
+  theme_minimal()
+```
