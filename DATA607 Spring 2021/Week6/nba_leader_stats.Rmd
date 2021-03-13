@@ -1,6 +1,6 @@
 ---
 title: "Project 2 - NBA Stats"
-author: "Peter Gatica"
+author: "Team: Maria Ginorio, Euclides Rodriguez, Peter Gatica"
 date: "03/12/2021"
 output:
   html_document:
@@ -10,7 +10,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r message=FALSE}
+```{r message=FALSE, include=FALSE}
 # Load needed libraries
 library(devtools)
 library(tidyverse)
@@ -19,48 +19,76 @@ library(plyr)
 library(knitr)
 ```
 
-```{r}
+## Introduction - NBA Leaders in Three pointers, Field Goals, and Free Throws as of March, 9, 2021 through 37 games.
+####  I really enjoy sports statistics especially baseball and basketball stats.  I chose basketball for this project because in baseball we count everything and there are just too many for my inexperience with data analytics.  Basketball has some highly visible and very exciting stats like the 3 pointer and some not so exciting but just as important when a game is on the line but each can determine the outcome of a game.
+
+I took a manual copy of the NBA Players stats page for the 492 players in the league as of 03/09/2021 and created a text file.  When saved the file contents was tab delimited with some extraneous fields and data.  Below you will find a sample.
+
+```{r read NBA stats file}
 filename <- "https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week6/Data/NBA_Player_Stats.txt"
 nba_player_stats <- readLines(filename)
 nba_player_stats[1:19]
 ```
 
-```{r}
+Initialize nba_player_rows vector to hold the rows of player data.
+
+```{r Initialize nba_player_rows vector}
 nba_player_rows <- c()
 ```
 
-```{r}
-for (i in seq(11, 1486, 3)) {
-  row1 <- unlist(strsplit(nba_player_stats[i], '\\\t'))
-  player_row <- as.integer(gsub(' ', '', row1[1]))
-  
-  row2 <- unlist(strsplit(nba_player_stats[i+1], '\\\t'))
-  player_name <- str_to_title(str_trim(row2[1]))
+The first 11 rows in the dataset are extraneous and will not be used for our purposes here so I will start at row 11 and process all 1486 rows advancing each read by 3 rows.
 
-  row3 <- unlist(strsplit(nba_player_stats[i+2], '\\\t'))
-  games_played <- as.numeric(gsub(' ', '', row3[2]))
-  min_played <- as.numeric(gsub(' ', '', row3[3]))
-  pts_scored <- as.numeric(gsub(' ', '', row3[4]))
-  fg_made <- as.numeric(gsub(' ', '', row3[5]))
-  fg_attempted <- as.numeric(gsub(' ', '', row3[6]))
-  fg_perc <- as.numeric(gsub(' ', '', row3[7]))
-  three_pts_made <- as.numeric(gsub(' ', '', row3[8]))
-  three_pts_attempted <- as.numeric(gsub(' ', '', row3[9]))
-  three_perc <- as.numeric(gsub(' ', '', row3[10]))
-  ft_made <- as.numeric(gsub(' ', '', row3[11]))
-  ft_attempted <- as.numeric(gsub(' ', '', row3[12]))
-  ft_perc <- as.numeric(gsub(' ', '', row3[13]))
+I use the following functions to process and tidy up the nba_player_stats:
+    
+    1. unlist() produces a vector which contains all the atomic components which occur in list (row).
+    2. strsplit() will split the elements of a character vector into substrings according to the matching substring.
+       In this case the tab delimiter.
+    3. gusub() will search for white space and replace with no space
+    4. str_to_title() will convert every first letter in each word to a capital letter.
+    5. rbind() will combine the rows created into the vector initialized above.
+    6. seq() is used to cycle through all rows in the dataset starting at row 11, ending with the last row at 1486 by
+       every 3 rows.
+
+```{r}
+for (i in seq(12, 1486, 3)) {
+#  row1 <- unlist(strsplit(nba_player_stats[i], '\\\t'))
+#  player_row <- gsub(' ', '', row1[1])
   
-  nba_player_rows <- rbind(nba_player_rows, c(player_row, player_name, games_played, min_played, pts_scored, fg_made, fg_attempted, fg_perc, three_pts_made, three_pts_attempted, three_perc, ft_made, ft_attempted, ft_perc))
+  row1 <- unlist(strsplit(nba_player_stats[i], '\\\t'))
+  player_name <- str_to_title(str_trim(row1[1]))
+
+  row2 <- unlist(strsplit(nba_player_stats[i+1], '\\\t'))
+  games_played <- gsub(' ', '', row2[2])
+  min_played <- gsub(' ', '', row2[3])
+  pts_scored <- gsub(' ', '', row2[4])
+  fg_made <- gsub(' ', '', row2[5])
+  fg_attempted <- gsub(' ', '', row2[6])
+  fg_perc <- gsub(' ', '', row2[7])
+  three_pts_made <- gsub(' ', '', row2[8])
+  three_pts_attempted <- gsub(' ', '', row2[9])
+  three_perc <- gsub(' ', '', row2[10])
+  ft_made <- gsub(' ', '', row2[11])
+  ft_attempted <- gsub(' ', '', row2[12])
+  ft_perc <- gsub(' ', '', row2[13])
+  
+  nba_player_rows <- rbind(nba_player_rows, c(player_name, games_played, min_played, pts_scored, fg_made, fg_attempted, fg_perc, three_pts_made, three_pts_attempted, three_perc, ft_made, ft_attempted, ft_perc))
 }
 ```
 
+Next I created a data.frame from the list of concatenated rows of NBA players and only subsetting the field that I believe are the most important statistics in basketball to include 3 Point Percentage, Field Goal Percentage, and Free Throw Percentage.
+
 ```{r}
 nba_player_stats_df <- data.frame(nba_player_rows)
-colnames(nba_player_stats_df) <- c("#","Player","games_played","min_played","pts_scored","fg_made","fg_attemps","fg_pct","three_pts_made","three_pts_attempts","three_pts_pct","ft_made","ft_attemps","ft_pct")
+colnames(nba_player_stats_df) <- c("Player","games_played","min_played","pts_scored","fg_made","fg_attemps","fg_pct","three_pts_made","three_pts_attempts","three_pts_pct","ft_made","ft_attemps","ft_pct")
 head(nba_player_stats_df,50)
 ```
 
+I am shortening the name of Giannis Antetokounmpo to G. Antetokounmpo for display purposes as I noticed that his name would overrun into the next players label in any graph his name was present.
+```{r}
+nba_player_stats_df$Player[nba_player_stats_df$Player == "Giannis Antetokounmpo"] <- "G. Antetokounmpo"
+```
+
+Transformation of character fields to integers and doubles.
 ```{r}
 nba_player_stats_df$games_played <- as.integer(nba_player_stats_df$games_played)
 nba_player_stats_df$min_played <- as.integer(nba_player_stats_df$min_played)
@@ -78,17 +106,22 @@ nba_player_stats_df$ft_pct <- as.double(nba_player_stats_df$ft_pct)
 head(nba_player_stats_df,10)
 ```
 
-
 ```{r}
-nba_3p_stats <- nba_player_stats_df %>% filter(three_pts_attempts >= 100) %>% select('Player','games_played','three_pts_made', 'three_pts_attempts','three_pts_pct') 
-head(nba_3p_leaders <- nba_3p_stats[with(nba_3p_stats, order(-three_pts_pct)),],10)
+summary(nba_player_stats_df)
 ```
 
+I have selected the 3 point shooting leaders based on percentage among those players who have made over 100 3 point attempts so that players who have played a game or two and who have made 8 out of their 10 3 point attempts don't show up as the leaders.  You will notice that I also do this for field goal and free throw attempts.
 ```{r}
-head(nba_3p_leaders,5) %>%
+nba_3p_stats <- nba_player_stats_df %>% filter(three_pts_attempts >= 100) %>% select('Player','games_played','three_pts_made', 'three_pts_attempts','three_pts_pct') 
+(nba_3p_leaders <- head(nba_3p_stats[with(nba_3p_stats, order(-three_pts_pct)),],5))
+```
+
+#### The first statistic that I cover is the 3 point shot and shown below are the top 5 3 point shooters in the league as of 3/9/2021 through 37 games. It's hard to imagine that Joe Harris has already 249 3 point attempts and he leads the league with making just over half.  Luke Kennard and Desmond Bane seem to be more efficient 3 point shooters at almost 46% only attempting 114 3 pointers.
+```{r}
+nba_3p_leaders %>%
   ggplot(aes(x=reorder(Player,three_pts_attempts),y=three_pts_attempts,fill=Player)) + 
   geom_bar(stat = 'identity',position=position_dodge())   +
-  geom_text(aes(label=three_pts_pct), vjust=1.6, color="white",
+  geom_text(aes(label=three_pts_pct), vjust=1.6, color="black",
             position = position_dodge(0.9), size=3.5) +
 
   labs(y = ("3 Point Attempts"),x = ("Player"),
@@ -97,17 +130,21 @@ head(nba_3p_leaders,5) %>%
   theme_minimal()
 ```
 
+Next are the field goal shooting leaders based on percentage among those players who have made over 175 field goal attempts.
 ```{r}
-nba_fg_stats <- nba_player_stats_df %>% filter(fg_attemps >= 100) %>% select('Player','games_played','fg_made', 'fg_attemps','fg_pct') 
-head(nba_fg_leaders <- nba_fg_stats[with(nba_fg_stats, order(-fg_pct)),],10)
+nba_fg_stats <- nba_player_stats_df %>% filter(fg_attemps >= 175) %>% select('Player','games_played','fg_made', 'fg_attemps','fg_pct') 
+(nba_fg_leaders <- head(nba_fg_stats[with(nba_fg_stats, order(-fg_pct)),],5))
 ```
 
+#### Field goals are the shots that count as 2 points.  These are your high percentage shots and can be very exciting when players drive in for reverse layups, spinning dunks or "in your face" stuffs into the rim.  Personally, I love to see high percentage shots off the backboard like the ones Tim Duncan was so good at.  I miss that guy.  Below are the top 5 in the NBA for field goals made.  I was surprised that Jarrett Allen leads with 66.9 %.  For some reason I thought that these would be higher percentages.  
+
+#### The most field goal attempts by a player is 386 by Bradley Beal and he has a 47.6 field goal percentage.
 ```{r}
-head(nba_fg_stats,5) %>%
+nba_fg_leaders %>%
   ggplot(aes(x=reorder(Player,fg_attemps),y=fg_attemps,fill=Player)) + 
   geom_bar(stat = 'identity',position=position_dodge())   +
-  geom_text(aes(label=fg_pct), vjust=1.6, color="white",
-            position = position_dodge(0.9), size=6.0) +
+  geom_text(aes(label=fg_pct), vjust=1.6, color="black",
+            position = position_dodge(0.9), size=3.5) +
 
   labs(y = ("Field Goal Attempts"),x = ("Player"),
       title = ("Percentage of Field Goals Made by Field Goal Attempts Taken by Player")  ) +
@@ -115,16 +152,19 @@ head(nba_fg_stats,5) %>%
   theme_minimal()
 ```
 
+Lastly, the free throw leaders are based on percentage among those players who have made over 200 free throw attempts.
 ```{r}
-nba_ft_stats <- nba_player_stats_df %>% filter(ft_attemps >= 100) %>% select('Player','games_played','ft_made', 'ft_attemps','ft_pct') 
-head(nba_ft_leaders <- nba_ft_stats[with(nba_ft_stats, order(-ft_pct)),],10)
+nba_ft_stats <- nba_player_stats_df %>% filter(ft_attemps >= 200) %>% select('Player','games_played','ft_made', 'ft_attemps','ft_pct') 
+(nba_ft_leaders <- head(nba_ft_stats[with(nba_ft_stats, order(-ft_pct)),],5))
 ```
 
+#### Last but certainly not least and probably the least exciting of all shots is the free throw.  For obvous reasons this is the highest percentage shot in basketball.  The shot is not defended and you have clear sight to the basket and you are standing still thus the reason it is called a free throw.  Damian Lillard leads the league at 93.3% hitting a little over 9 out 10 free throws.  
+#### As you can see from the percentages that most players are highly skilled free throw shooters as they should be.  However, some players are not so skilled.  The lowest percentage from the free throw line is 63.2%.  We all know who Shaq is.  He was infamous for his lack of skill at the free throw line.  A good defense against his teams was the "hack-a-shaq" defense.  Putting him at the line would slow his team down and would most times cost them points with his misses.
 ```{r}
-head(nba_ft_stats,5) %>%
+nba_ft_leaders %>%
   ggplot(aes(x=reorder(Player,ft_attemps),y=ft_attemps,fill=Player)) + 
   geom_bar(stat = 'identity',position=position_dodge())   +
-  geom_text(aes(label=ft_pct), vjust=1.6, color="white",
+  geom_text(aes(label=ft_pct), vjust=1.6, color="black",
             position = position_dodge(0.9), size=3.5) +
 
   labs(y = ("Free Throw Attempts"),x = ("Player Name"),
@@ -132,3 +172,7 @@ head(nba_ft_stats,5) %>%
   scale_fill_brewer(palette="Paired") +
   theme_minimal()
 ```
+
+## Conclusion
+
+#### In conclusion, the question is this, with 10-15 seconds left in a game and your team is down by 1 point, what strategy do you employ?  Do you go for the win with a 3 point attempt? A 2 point shot from the perimeter for the win or do you put the ball in your best free throw shooter's hands in the hopes that he is fouled as he drives to the basket for two points.  If I was Greg Poppovich I would go with percentages and put the ball in my best free throw shooter's hands.  If he does not get fouled he has a good chance of making the layup or easy shot.  If he does get fouled, he has an even better chance of making the free throws to either tie or win the game.
