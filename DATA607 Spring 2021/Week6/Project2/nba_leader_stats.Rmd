@@ -1,10 +1,11 @@
 ---
 title: "Project 2 - NBA Stats"
-author: "Team: Maria Ginorio, Euclides Rodriguez, Peter Gatica"
+author: 'Team: Maria Ginorio, Euclides Rodriguez, Peter Gatica'
 date: "03/12/2021"
 output:
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -27,7 +28,7 @@ library(knitr)
 I took a manual copy of the NBA Players stats page for the 492 players in the league as of 03/09/2021 and created a text file.  When saved the file contents was tab delimited with some extraneous fields and data.  Below you will find a sample.
 
 ```{r read NBA stats file}
-filename <- "https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week6/Data/NBA_Player_Stats.txt"
+filename <- "https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week6/Project2/Data/NBA_Player_Stats.txt"
 nba_player_stats <- readLines(filename)
 nba_player_stats[1:19]
 ```
