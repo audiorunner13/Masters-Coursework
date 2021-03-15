@@ -22,6 +22,8 @@ library(knitr)
 ## Introduction - NBA Leaders in Three pointers, Field Goals, and Free Throws as of March, 9, 2021 through 37 games.
 ####  I really enjoy sports statistics especially baseball and basketball stats.  I chose basketball for this project because in baseball we count everything and there are just too many for my inexperience with data analytics.  Basketball has some highly visible and very exciting stats like the 3 pointer and some not so exciting but just as important when a game is on the line but each can determine the outcome of a game.
 
+## **Source:** [NBA Advanced Stats](https://www.nba.com/stats/leaders/?PerMode=Totals&Season=2020-21&SeasonType=Regular%20Season)
+
 I took a manual copy of the NBA Players stats page for the 492 players in the league as of 03/09/2021 and created a text file.  When saved the file contents was tab delimited with some extraneous fields and data.  Below you will find a sample.
 
 ```{r read NBA stats file}

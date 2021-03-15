@@ -1655,6 +1655,10 @@ summary {
 <h2>Introduction - NBA Leaders in Three pointers, Field Goals, and Free Throws as of March, 9, 2021 through 37 games.</h2>
 <div id="i-really-enjoy-sports-statistics-especially-baseball-and-basketball-stats.-i-chose-basketball-for-this-project-because-in-baseball-we-count-everything-and-there-are-just-too-many-for-my-inexperience-with-data-analytics.-basketball-has-some-highly-visible-and-very-exciting-stats-like-the-3-pointer-and-some-not-so-exciting-but-just-as-important-when-a-game-is-on-the-line-but-each-can-determine-the-outcome-of-a-game." class="section level4">
 <h4>I really enjoy sports statistics especially baseball and basketball stats. I chose basketball for this project because in baseball we count everything and there are just too many for my inexperience with data analytics. Basketball has some highly visible and very exciting stats like the 3 pointer and some not so exciting but just as important when a game is on the line but each can determine the outcome of a game.</h4>
+</div>
+</div>
+<div id="source-nba-advanced-stats" class="section level2">
+<h2><strong>Source:</strong> <a href="https://www.nba.com/stats/leaders/?PerMode=Totals&amp;Season=2020-21&amp;SeasonType=Regular%20Season">NBA Advanced Stats</a></h2>
 <p>I took a manual copy of the NBA Players stats page for the 492 players in the league as of 03/09/2021 and created a text file. When saved the file contents was tab delimited with some extraneous fields and data. Below you will find a sample.</p>
 <pre class="r"><code>filename &lt;- &quot;https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week6/Data/NBA_Player_Stats.txt&quot;
 nba_player_stats &lt;- readLines(filename)
@@ -1780,7 +1784,6 @@ head(nba_player_stats_df,10)</code></pre>
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Player"],"name":[1],"type":["chr"],"align":["left"]},{"label":["games_played"],"name":[2],"type":["int"],"align":["right"]},{"label":["three_pts_made"],"name":[3],"type":["int"],"align":["right"]},{"label":["three_pts_attempts"],"name":[4],"type":["int"],"align":["right"]},{"label":["three_pts_pct"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"Joe Harris","2":"37","3":"126","4":"249","5":"50.6","_rn_":"47"},{"1":"Joe Ingles","2":"32","3":"79","4":"170","5":"46.5","_rn_":"94"},{"1":"Marcus Morris Sr.","2":"28","3":"65","4":"140","5":"46.4","_rn_":"104"},{"1":"Desmond Bane","2":"29","3":"52","4":"114","5":"45.6","_rn_":"123"},{"1":"Luke Kennard","2":"34","3":"52","4":"114","5":"45.6","_rn_":"136"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
-</div>
 </div>
 <div id="the-first-statistic-that-i-cover-is-the-3-point-shot-and-shown-below-are-the-top-5-3-point-shooters-in-the-league-as-of-392021-through-37-games.-its-hard-to-imagine-that-joe-harris-has-already-249-3-point-attempts-and-he-leads-the-league-with-making-just-over-half.-luke-kennard-and-desmond-bane-seem-to-be-more-efficient-3-point-shooters-at-almost-46-only-attempting-114-3-pointers." class="section level4">
 <h4>The first statistic that I cover is the 3 point shot and shown below are the top 5 3 point shooters in the league as of 3/9/2021 through 37 games. It’s hard to imagine that Joe Harris has already 249 3 point attempts and he leads the league with making just over half. Luke Kennard and Desmond Bane seem to be more efficient 3 point shooters at almost 46% only attempting 114 3 pointers.</h4>
