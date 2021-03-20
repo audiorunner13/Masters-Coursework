@@ -1,0 +1,114 @@
+---
+title: "Week 7 - Working with XML and JSON in R"
+author: "Peter Gatica"
+date: "0320/2021"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+```{r  load-packages, message=FALSE}
+library(devtools)
+library(tidyverse)
+library(RCurl)
+library(XML)
+library(jsonlite)
+library(knitr)
+```
+
+**Sources:** 
+
+[Favorite Books XML file](https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week7/Homework7/Data/Fave_Hist_Books.xml)
+
+[Favorite Books HTML Table file](https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week7/Homework7/Data/Fave_Hist_Books_tbl.html)
+
+[Favorite Books HTML file](https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week7/Homework7/Data/Fave_Hist_Books.html)
+
+[Favorite Books JSON file](https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week7/Homework7/Data/Fave_Hist_Books.json)
+
+**Process the XML file** 
+```{r}
+filename <- getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week7/Homework7/Data/Fave_Hist_Books.xml")
+(fave_books_xml <- xmlParse(filename))
+```
+
+```{r}
+class(fave_books_xml)
+```
+
+```{r}
+(xml_books_df <- xmlToDataFrame(fave_books_xml))
+```
+
+```{r}
+fave_books_xml_1 <- xmlParse(filename,useInternalNodes = FALSE)
+fave_books_xml_1
+```
+
+```{r}
+class(fave_books_xml)
+```
+**Process the HTML Table file** 
+```{r}
+filename <-getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week7/Homework7/Data/Fave_Hist_Books_tbl.html")
+fave_books_html_tbl <- xmlParse(filename,isHTML = TRUE)
+fave_books_html_tbl
+```
+
+```{r}
+class(fave_books_html_tbl)
+```
+
+```{r}
+(html_tbl_books_df <- xmlToDataFrame(fave_books_html_tbl))
+```
+
+```{r}
+(fave_books_html_tbl_1 <- htmlParse(filename,isHTML = TRUE))
+```
+
+```{r}
+class(fave_books_html_tbl_1)
+```
+
+**Process HTML File**
+```{r}
+filename <- getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week7/Homework7/Data/Fave_Hist_Books.html")
+fave_books_html <- xmlParse(filename,isHTML = TRUE)
+fave_books_html
+```
+
+```{r}
+class(fave_books_html)
+```
+
+```{r}
+(html_books_df <- xmlToDataFrame(fave_books_html))
+```
+
+```{r}
+fave_books_html_1 <- htmlParse(filename,isHTML = TRUE)
+fave_books_html_1
+```
+
+```{r}
+class(fave_books_html_1)
+```
+
+```{r}
+(html_books_df_1 <- xmlToDataFrame(fave_books_html_1))
+```
+
+**Process JSON File**
+```{r}
+filename <- getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week7/Homework7/Data/Fave_Hist_Books.json")
+fave_books_json = fromJSON(filename)
+```
+
+```{r}
+class(fave_books_json)
+```
+
+```{r}
+as.data.frame(fromJSON(filename))
+```
