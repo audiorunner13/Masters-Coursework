@@ -1,0 +1,47 @@
+{
+    "book1": {
+        "Title": "Faith of My Fathers",
+        "Author": "John McCain",
+        "Education": "US Naval Academy",
+        "Career": "Republican Senator",
+        "Author": "John McCain",
+        "Miscellaneous": "Naval Aviator",
+        "ISBN-13": "978-0-3995-9089-4",
+        "Publisher": "Random House Publishing Group",
+        "Publication Year": "1998",
+        "Pages": "398",
+        "Language": "English"
+    },
+    "book2": {
+        "Title": "Indianapolis",
+        "Author": "Lynn Vincent",
+        "Education": "US Navy Veteran",
+        "Career": "Journalist",
+        "Miscellaneous": "Amazon Best of 2018",
+        "Author": "Sara Vladic",
+        "Education": "Pepperdine University",
+        "Career": "Documentary Filmmaker",
+        "Miscellaneous": "San Diego Film Award",
+        "ISBN-13": "978-1-5011-3594-1",
+        "Publisher": "Simon & Schuster Paperbacks",
+        "Publication Year": "2019",
+        "Pages": "578",
+        "Language": "English"
+    },
+    "book3": {
+        "Title": "We Were Soldiers Once...and Young",
+        "Author": "Hal Moore",
+        "Education": "West Point",
+        "Career": "Lt General, US Army",
+        "Miscellaneous": "Vietname Veteran",
+        "Author": "Joseph Galloway",
+        "Education": "Bronze Star V-Device",
+        "Career": "Author,Journalist",
+        "Miscellaneous": "Decorated non-combatant",
+        "ISBN-13": "978-0-3454-7581-7",
+        "Publisher": "Random House Publishing Group",
+        "Publication Year": "2004",
+        "Pages": "480",
+        "Language": "English"
+    }
+}

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<books>
+    <book pages="398" lang="eng">
+        <title>Faith of My Fathers</title>
+        <author_1>
+            <first_name>John</first_name>
+            <last_name>McCain</last_name>
+            <educ>US Naval Academy</educ>
+            <career>Republican Senator</career>
+            <misc>Naval Aviator</misc>
+        </author_1>
+        <isbn-13>978-0-3995-9089-4</isbn-13>
+        <publisher>Random House Publishing Group</publisher>
+        <pub_year>1998</pub_year>
+    </book>
+    <book pages="578" lang="eng">
+        <title>Indianapolis</title>
+        <author_1>
+            <first_name>Lynn</first_name>
+            <last_name>Vincent</last_name>
+            <educ>US Navy Veteran</educ>
+            <career>Journalist</career>
+            <misc>Amazon Best of 2018</misc>
+        </author_1>
+        <author_2>
+            <first_name>Sara</first_name>
+            <last_name>Vladic</last_name>
+            <educ>Pepperdine University</educ>
+            <career>Documentary Filmmaker</career>
+            <misc>San Diego Film Award</misc>
+        </author_2>
+        <isbn-13>978-1-5011-3594-1</isbn-13>
+        <publisher>Simon and Schuster Paperbacks</publisher>
+        <pub_year>2019</pub_year>
+    </book><book pages="480" lang="eng">
+        <title>We Were Soldiers Once...and Young</title>
+        <author_1>
+            <first_name>Hal</first_name>
+            <last_name>Moore</last_name>
+            <educ>West Point</educ>
+            <career>Lt General, US Army</career>
+            <misc>Vietnam Veteran</misc>
+        </author_1>
+        <author_2>
+            <first_name>Joseph</first_name>
+            <last_name>Galloway</last_name>
+            <educ>Bronze Star V-Device</educ>
+            <career>Author,Journalist</career>
+            <misc>Decorated non-combatant</misc>
+        </author_2>
+        <isbn-13>978-0-3454-7581-7</isbn-13>
+        <publisher>Random House Publishing Group</publisher>
+        <pub_year>2004</pub_year>
+    </book>
+</books>
