@@ -80,7 +80,7 @@ loop_num = 4
 while(x < loop_num)
 {
   if (x == 1) {
-    url <- "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?opening-date=2020-02-12:2021-04-10&order=by-opening-date&api-key=33nx92050KEuFWADofpqmL4sZW0K4YEd"
+    url <- "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?opening-date=2020-02-12:2021-04-10&order=by-opening-date&api-key=YOURKEYHERE"
     movie_reviews_1 <- GET(url)
     get_status <- movie_reviews_1$status_code
     if (get_status != 200) {
@@ -91,7 +91,7 @@ while(x < loop_num)
     results_list <- movie_revs_parsed_1[["results"]]
   }
   if (x == 2) {
-    url <- "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?opening-date=2020-01-01:2021-02-11&order=by-opening-date&api-key=33nx92050KEuFWADofpqmL4sZW0K4YEd"
+    url <- "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?opening-date=2020-01-01:2021-02-11&order=by-opening-date&api-key=YOURKEYHERE"
     movie_reviews_2 <- GET(url)
     get_status <- movie_reviews_2$status_code
     if (get_status != 200) {
@@ -102,7 +102,7 @@ while(x < loop_num)
     results_list <- movie_revs_parsed_2[["results"]]
   }
   if (x == 3) {
-    url <- "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?opening-date=2020-10-01:2020-12-03&order=by-opening-date&api-key=33nx92050KEuFWADofpqmL4sZW0K4YEd"
+    url <- "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?opening-date=2020-10-01:2020-12-03&order=by-opening-date&api-key=YOURKEYHERE"
     movie_reviews_3 <- GET(url)
     get_status <- movie_reviews_3$status_code
     if (get_status != 200) {
