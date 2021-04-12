@@ -1,0 +1,132 @@
+---
+title: "Week 9 Assignment – Web APIs"
+author: "Peter Gatica"
+date: "04/11/2021"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+```{r}
+library(devtools)
+library(RCurl)
+library(plyr)
+library(ggplot2)
+library(httr)
+library(jsonlite)
+```
+
+## Preparing Data:
+ 1.  Choose one of the New York Times APIs.  I chose the Movie Reviews API 
+ 2.  Request API key.
+ 3.  Construct an interface in R to read in the JSON data that will run 3 times so that I can get 60 
+     entries for my data.frame.  The max return from the API is 20.
+ 4.  Transformed data to an R dataframe
+
+## Function proc_results_2_df will transform data and build the data.frame.
+```{r}
+proc_results_2_df <- function(results_list)
+{
+  (proc <- "in function")
+  y <- 1
+  loop_num_res = 21
+  while(y < loop_num_res)
+    {
+    if (results_list[[y]]$display_title != "") {
+    movie_title <- results_list[[y]]$display_title
+    movie_rating <- results_list[[y]]$mpaa_rating
+    movie_critic <- results_list[[y]]$byline
+    movie_review <- results_list[[y]]$summary_short
+    if (is.null(results_list[[y]]$opening_date)) {
+      movie_open_date <- '9999-99-99'
+    } else {
+        movie_open_date <- results_list[[y]]$opening_date
+    }
+    if (is.null(results_list[[y]]$publication_date)) {
+      movie_rev_pub_date <- '9999-99-99'
+    } else {
+        movie_rev_pub_date <- results_list[[y]]$publication_date
+    }
+    movie_review_url <- results_list[[y]]$link$url
+    (new_row <- c(movie_title,movie_rating,movie_critic,movie_review,movie_open_date,movie_rev_pub_date,movie_review_url))
+    movie_review_df <- rbind(movie_review_df,new_row)
+    }
+  if (y == 1) {
+    names(movie_review_df) <- c("movie_title","movie_rating","movie_critic","movie_review","movie_open_date","movie_rev_pub_date","movie_review_url")
+  }
+  y <- y + 1
+  }
+  (df_build_status <- "movie reviews added successfully")
+  return(movie_review_df)
+}
+```
+
+## Initialize data frames for use
+```{r}
+temp_df <- data.frame(c())
+movie_review_df <- data.frame(c())
+movie_review_df_final <- data.frame(c())
+```
+
+
+## Issue API Call
+1.  Issue the NYT Movie Reviews API call 3 times so that I can get 60 entries for my data.frame.
+    The max return from the API is 20.
+2.  Check API response status
+3.  Query the NYT Movie Reviews db to get the latest 60 movie reviews 
+```{r}
+x <- 1
+loop_num = 4
+while(x < loop_num)
+{
+  if (x == 1) {
+    url <- "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?opening-date=2020-02-12:2021-04-10&order=by-opening-date&api-key=33nx92050KEuFWADofpqmL4sZW0K4YEd"
+    movie_reviews_1 <- GET(url)
+    get_status <- movie_reviews_1$status_code
+    if (get_status != 200) {
+      stop_for_status(get_status)
+    }
+    mr_1_hdrs <- headers(movie_reviews_1)
+    movie_revs_parsed_1 <- content(movie_reviews_1,"parse")
+    results_list <- movie_revs_parsed_1[["results"]]
+  }
+  if (x == 2) {
+    url <- "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?opening-date=2020-01-01:2021-02-11&order=by-opening-date&api-key=33nx92050KEuFWADofpqmL4sZW0K4YEd"
+    movie_reviews_2 <- GET(url)
+    get_status <- movie_reviews_2$status_code
+    if (get_status != 200) {
+      stop_for_status(get_status)
+    }
+    mr_2_hdrs <- headers(movie_reviews_2)
+    movie_revs_parsed_2 <- content(movie_reviews_2,"parse")
+    results_list <- movie_revs_parsed_2[["results"]]
+  }
+  if (x == 3) {
+    url <- "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?opening-date=2020-10-01:2020-12-03&order=by-opening-date&api-key=33nx92050KEuFWADofpqmL4sZW0K4YEd"
+    movie_reviews_3 <- GET(url)
+    get_status <- movie_reviews_3$status_code
+    if (get_status != 200) {
+      stop_for_status(get_status)
+    }
+    mr_3_hdrs <- headers(movie_reviews_3)
+    movie_revs_parsed_3 <- content(movie_reviews_3,"parse")
+    results_list <- movie_revs_parsed_3[["results"]]
+  }
+
+  # Call function proc_results_2_df
+  (temp_data <- proc_results_2_df(results_list))
+  movie_review_df_final <- rbind(movie_review_df_final, temp_data)
+  x <- x + 1
+}
+```
+
+```{r}
+movie_review_df_final
+```
+####
+#### Add a unique ID column based on row name of each entry for future load to a db table.
+```{r}
+(movie_review_df_final <- cbind( data.frame("movie_rev_id" = as.integer(rownames(movie_review_df_final))), movie_review_df_final))
+```
+
+#### Conclusion:  I found using the NYT APIs easy to figure out.  This is one one of easier assignments for me and I think that is because it is very ETL-like.  I chose the Movie Reviews because one of my earlier assignments was building a database using MySql and I create the Movies DB and this code would fit nicely into that design.
