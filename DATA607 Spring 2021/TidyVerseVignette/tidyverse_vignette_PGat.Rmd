@@ -30,7 +30,7 @@ library(RCurl)
 ### These are two packages within tidyverse that I really enjoyed using to extract data from a New York Times API.
 
 ```{r include=FALSE }
-   (url <- "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?opening-date=2020-02-12:2021-04-10&order=by-opening-date&api-key=9ie8OJYquhX2jqf8hymr4gP0iGkJgikE")
+   (url <- "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?opening-date=2020-02-12:2021-04-10&order=by-opening-date&api-key=YOURKEYHERE")
 ```
 
 It is important to code defensively by capturing and processing error codes.  To test if the code will fail if the status code is anything other than 200, uncomment the get_status code
