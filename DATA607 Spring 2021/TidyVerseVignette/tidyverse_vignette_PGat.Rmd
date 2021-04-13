@@ -1,0 +1,167 @@
+---
+title: "DATA607 TidyVerse Assignment"
+author: "Peter Gatica"
+date: "`r format(Sys.Date(), '%B %d %Y')`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+### Tidyverse Assignment Requirements - Tidyverse CREATE Assignment (25 points)
+  1.    Clone the provided repository (1 point) *
+  2.    Write a vignette using one TidyVerse package (15 points) *
+  3.    Write a vignette using more than one TidyVerse packages (+ 2 points) *
+  4.    Make a pull request on the shared repository (1 point)
+  5.    Update the README.md file with your example (2 points)
+  6.    Submit your GitHub handle name & link to Peergrade (1 point)
+  7.    Grade your 3 peers and provide the feedback in Peergrade (2 points)
+  8.    Submit the best peer link & your link to Blackboard (1 point)
+
+
+```{r}
+library(tidyverse)
+library(httr)
+library(jsonlite)
+library(RCurl)
+```
+
+# Vignette 1 - jsonlite and hittr 
+### These are two packages within tidyverse that I really enjoyed using to extract data from a New York Times API.
+
+```{r include=FALSE }
+   (url <- "https://api.nytimes.com/svc/movies/v2/reviews/picks.json?opening-date=2020-02-12:2021-04-10&order=by-opening-date&api-key=9ie8OJYquhX2jqf8hymr4gP0iGkJgikE")
+```
+
+It is important to code defensively by capturing and processing error codes.  To test if the code will fail if the status code is anything other than 200, uncomment the get_status code
+```{r}
+api_call_return <- GET(url)
+(get_status <- api_call_return$status_code)
+# Uncomment to test stop_for_status for API call error
+#get_status<- 404
+```
+Test the return status and extract the api result set for processing
+```{r test the return status and extract the api result set for processing}
+if (get_status != 200) {
+  stop_for_status(get_status)
+}
+api_call_header <- headers(api_call_return)
+api_call_parsed <- content(api_call_return,"parse")
+results_list <- api_call_parsed[["results"]]
+head(results_list,1)
+```
+
+# Vignette 2 - ggplot, rCURL
+### These are two packages within tidyverse. rCURL allow a source to be retrieved from a website while ggplot gives the ability to create numerous types of graphs to visualize your data with.
+
+For this vignette I am using a subset of the baseball.csv from https://www.kaggle.com/danielmontilla/baseball-databank.  The subset file contains 62 players from 2019 MLB season and I will calculate batting average by position for 2019 as well as visualize the top player batting averages for 2019 by position type (outfield, infield and catcher). The catcher position is not considered an infield nor outfield position.  The catcher is the only postion positioned in foul territory.  Plus the catcher is the only player that can see the entire field.  How many of you new this?
+
+```{r Source subset file from kaggle website from my github}
+# Source the subset file from the Kaggle Website from my github repository
+filename <- getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/TidyVerseVignette/Data/BattingByPosition.csv")
+batting_by_posit <- read.csv(text = filename,na.strings = "")
+batting_by_posit
+```
+
+The next four sections calculate the batting average for each position type
+```{r}
+# create a batting_by_posit_totals data.frame and aggregate the avg by position type
+batting_by_posit_totals <- aggregate.data.frame(x = batting_by_posit$avg,   # Sum by group
+          by = list(batting_by_posit$posit),
+          FUN = sum)
+# rename fields in df
+(batting_by_posit_totals <- batting_by_posit_totals %>% 
+   dplyr::rename("position" = Group.1, "total_bavg" = x))
+```
+
+```{r calc a catcher batting averagge and create catcher record df, echo=TRUE}
+# calc a prercentage field and append to repsective rows
+catcher_total_bavg_rec <- batting_by_posit_totals %>% filter(batting_by_posit_totals$position == "catcher")
+catcher_bavg <- catcher_total_bavg_rec$total_bavg/14
+bat_avg <- round(catcher_bavg,3)
+(catcher_total_bavg_rec <- cbind(catcher_total_bavg_rec,bat_avg))
+```
+
+```{r calc a outfield batting averagge and create outfield record df, echo=TRUE}
+# calc a prercentage field and append to repsective rows
+outfield_total_bavg_rec <- batting_by_posit_totals %>% filter(batting_by_posit_totals$position == "outfield")
+outfield_bavg <- outfield_total_bavg_rec$total_bavg/24
+bat_avg <- round(outfield_bavg,3)
+(outfield_total_bavg_rec <- cbind(outfield_total_bavg_rec,bat_avg))
+```
+
+```{r calc a infield batting averagge and create infield record df, echo=TRUE}
+# calc a prercentage field and append to repsective rows
+infield_total_bavg_rec <- batting_by_posit_totals %>% filter(batting_by_posit_totals$position == "infield")
+infield_bavg <- infield_total_bavg_rec$total_bavg/24
+bat_avg <- round(infield_bavg,3)
+(infield_total_bavg_rec <- cbind(infield_total_bavg_rec,bat_avg))
+```
+
+```{r use rbinf to create final batting average by position df}
+final_batting_by_posit <- data.frame(c())
+final_batting_by_posit <- rbind(final_batting_by_posit,catcher_total_bavg_rec)
+final_batting_by_posit <- rbind(final_batting_by_posit,outfield_total_bavg_rec)
+final_batting_by_posit <- rbind(final_batting_by_posit,infield_total_bavg_rec)
+final_batting_by_posit
+```
+
+#### Use ggplot to create the following graphs to visualize the data.
+```{r plot bar graph of total batting average by position}
+final_batting_by_posit %>%
+  ggplot(aes(y=reorder(position,bat_avg),x=bat_avg,fill=position)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=bat_avg), vjust=1.0, color="black",
+                position = position_dodge(0.9), size=3.0) +
+      labs(y = ("Position"),x = ("Position Batting Average"),
+           title = ("2019 Batting Average by Positiion")) +
+      theme_minimal()
+```
+
+```{r subset batting_by_posit by outfield position}
+(outfield_players <- batting_by_posit %>% filter(batting_by_posit$posit == "outfield"))
+```
+
+```{r plot bar graph of outfielder batting average}
+outfield_players %>%
+  top_n(15) %>%
+  ggplot(aes(y=reorder(playerID,avg),x=avg,fill=playerID)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=avg), vjust=1.0, color="black",
+                position = position_dodge(0.9), size=3.0) +
+      labs(y = ("Player"),x = ("Outfielder Batting Average"),
+           title = ("2019 Top 15 Outfielder Batting Averages")) +
+      theme_minimal()
+```
+
+```{r subset batting_by_posit by infield position}
+(infield_players <- batting_by_posit %>% filter(batting_by_posit$posit == "infield"))
+```
+
+```{r plot bar graph of infielder batting average}
+infield_players %>%
+  top_n(15) %>% 
+  ggplot(aes(y=reorder(playerID,avg),x=avg,fill=playerID)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=avg), vjust=1.0, color="black",
+                position = position_dodge(0.9), size=3.0) +
+      labs(y = ("Player"),x = ("Infielder Batting Average"),
+           title = ("2019 Top 15 Infielder Batting Averages")) +
+      theme_minimal()
+```
+
+```{r subset batting_by_posit by catcher position}
+(catchers <- batting_by_posit %>% filter(batting_by_posit$posit == "catcher"))
+```
+
+```{r plot bar graph of catcher batting average}
+catchers %>%
+  top_n(10) %>%
+  ggplot(aes(y=reorder(playerID,avg),x=avg,fill=playerID)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=avg), vjust=1.0, color="black",
+                position = position_dodge(0.9), size=3.0) +
+      labs(y = ("Player"),x = ("Catcher Batting Average"),
+           title = ("2019 Top 10 Catcher Batting Averages")) +
+      theme_minimal()
+```
