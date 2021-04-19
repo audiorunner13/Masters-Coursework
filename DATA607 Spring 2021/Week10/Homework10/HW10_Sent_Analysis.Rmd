@@ -1,0 +1,232 @@
+---
+title: "Data607 - Week 10 - Sentiment Analysis"
+author: "Peter Gatica"
+date: "04-18-2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  bibliography: [book.bib]
+  references:
+  - id: silgerobinson2017a
+    title: Welcome to Text Mining with R
+    author:
+    - family: Silge
+      given: Julia
+    publisher: {O'Reilly Media, Inc CA}
+    isbn: 978-1-491-98165-8
+    url: 'https://github.com/dgrtwo/tidy-text-mining'
+    issued:
+      year: 2017
+      month: 6
+---
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(tinytex)
+library(gutenbergr)
+library(janeaustenr)
+library(tidyverse)
+library(RCurl)
+library(knitr)
+library(wordcloud)
+library(reshape2)
+```
+
+### Recreate and analyze primary code from textbook Welcome to Text Mining with R [@silge_robinson_text_mining_2017].  Recreating the code to analyze sentence sentimentality.
+
+@book{silge_robinson_text_mining_2017,
+    author = {Julia Silge, David Robinson},
+    title = {Welcome to Text Mining with R},
+    publisher = {O"'"Reilly Media, Inc CA},
+    year = {2017},
+    isbn = {978-1491981658},
+    url = {https://github.com/dgrtwo/tidy-text-mining}
+   }
+
+#### Recreating the code from Chapter 2 for sentence sentiment analysis
+
+Some sentiment analysis algorithms look beyond only unigrams (i.e. single words) to try to understand the sentiment of a sentence as a whole. These algorithms try to understand that
+
+    I am not having a good day.
+
+is a sad sentence, not a happy one, because of negation. R packages included coreNLP (T. Arnold and Tilton 2016), cleanNLP (T. B. Arnold 2016), and sentimentr (Rinker 2017) are examples of such sentiment analysis algorithms. For these, we may want to tokenize text into sentences, and it makes sense to use a new name for the output column in such a case.
+
+```{r}
+(p_and_p_sentences <- tibble(text = prideprejudice) %>% 
+  unnest_tokens(sentence, text, token = "sentences"))  # unnest tokens into a field called sentence with
+                                                       # sentences
+```
+
+```{r}
+(p_and_p_sentences$sentence[2])
+```
+
+The sentence tokenizing does seem to have a bit of trouble with UTF-8 encoded text, especially with sections of dialogue; it does much better with punctuation in ASCII. One possibility, if this is important, is to try using iconv(), with something like iconv(text, to = 'latin1') in a mutate statement before unnesting.
+
+Another option in unnest_tokens() is to split into tokens using a regex pattern. We could use this, for example, to split the text of Jane Austen’s novels into a data frame by chapter.
+
+```{r}
+(austen_chapters <- austen_books() %>%  # pipe austen_books to group_by()
+  group_by(book) %>%                    # group output by book
+    unnest_tokens(chapter, text, token = "regex",    #  unnest tokens by chapters using regex to find
+                pattern = "Chapter|CHAPTER [\\dIVXLC]") %>%  # chapters.  each row contains the all
+  ungroup())                                                 # sentences in a chapter
+```
+
+```{r}
+(austen_chapters %>% 
+  group_by(book) %>% 
+  summarise(chapters = n()))
+```
+
+1.    Let’s get the list of negative words from the Bing lexicon. 
+```{r}
+(bingnegative <- get_sentiments("bing") %>% 
+  filter(sentiment == "negative"))
+```
+
+```{r}
+(tidy_books <- austen_books() %>%
+  group_by(book) %>%
+  mutate(
+    linenumber = row_number(),
+    chapter = cumsum(str_detect(text, 
+                                regex("^chapter [\\divxlc]", 
+                                      ignore_case = TRUE)))) %>%
+  ungroup() %>%
+  unnest_tokens(word, text))
+```
+2.    Make a data frame of how many words are in each chapter so we can normalize for the length of chapters.
+```{r}
+(wordcounts <- tidy_books %>%
+  group_by(book, chapter) %>%
+  summarize(words = n()))
+```
+
+3.    Find the number of negative words in each chapter and divide by the total words in each chapter. 
+
+For each book, which chapter has the highest proportion of negative words?
+```{r}
+(tidy_books %>%
+  semi_join(bingnegative) %>%
+  group_by(book, chapter) %>%
+  summarize(negativewords = n()) %>%
+  left_join(wordcounts, by = c("book", "chapter")) %>%
+  mutate(ratio = negativewords/words) %>%
+  filter(chapter != 0) %>%
+  slice_max(ratio, n = 1) %>% 
+  ungroup())
+```
+
+## Import another lexicon (From twitter on airline sentiment)
+
+Import bing sentiment words to use as a look up.
+
+```{r}
+lookup_bing <- get_sentiments("bing")
+```
+
+Import the csv file airline review tweets as found on kaggle.com (https://www.kaggle.com/crowdflower/twitter-airline-sentiment)
+
+```{r }
+# filename <- getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week10/Data/Tweets.csv")
+# airline_tweets_src <- read.csv(text = filename,na.strings = "")
+filename <- "/Users/Audiorunner13/CUNY MSDS Course Work/DATA607 Spring 2021/Week10/archive/Tweets.csv"
+airline_tweets_src <- read.csv(filename)
+```
+
+```{r}
+airline_tweets_src$text <- tolower(airline_tweets_src$text) %>% str_replace("^@[a-z]* ", "")
+```
+
+```{r}
+head(airline_tweets <- airline_tweets_src %>% select(, airline, text, airline_sentiment),10)
+```
+
+What are the most common joy words by airline? 
+1.    We need to take the text of the review and convert the text to the tidy format using unnest_tokens().
+2.    Also, set up some other columns to keep track of which line and text of the airline each word comes from
+3.    We use group_by and mutate to construct those columns.
+
+```{r}
+(tidy_airline_reviews <- airline_tweets %>%
+  group_by(airline) %>%
+  mutate(
+    review = row_number())  %>%
+  ungroup() %>%
+  unnest_tokens(word, text))
+```
+
+Next, let’s filter() the data frame with the text from the books for the words from Emma and then use inner_join() to perform the sentiment analysis. What are the most common joy words in Emma? Let’s use count() from dplyr.
+```{r}
+(tidy_airline_reviews %>%      # pipe tidy_books content to filter()
+  filter(airline == "Virgin America") %>%     # filter on the book Emma
+  inner_join(lookup_bing) %>%        #  inner_join() on nrc_joy
+  count(word, sort = TRUE))      #  get a count of each joy word and sort in descending order
+```
+
+Count up how many positive and negative words there are for each airline. 
+
+We define an index here to keep track of where we are in the narrative; this index (using integer division) counts up sections of 80 lines of text for a better estimate than smaller or larger sections.
+
+Use pivot_wider() so that we have negative and positive sentiment in separate columns.
+
+Calculate a net sentiment (positive - negative).
+```{r}
+(twitter_airline_sentiment <- tidy_airline_reviews %>%  
+  inner_join(lookup_bing) %>%
+  count(airline, sentiment))
+```
+Multiply the negative counts by -1 for use with ggplot2
+```{r }
+x <- 1
+while (x < 13){
+  if (twitter_airline_sentiment$sentiment[x] == "negative"){
+     twitter_airline_sentiment$n[x] = twitter_airline_sentiment$n[x] * -1
+  }
+  x <- x + 1
+}
+twitter_airline_sentiment
+```
+Rename columns for use with ggplot2
+```{r}
+twitter_airline_sentiment <- twitter_airline_sentiment %>% rename(Airline = airline, Sentiment = sentiment, Count = n)
+```
+
+Plot negative and postive counts by airline using ggplot2
+```{r}
+ggplot(twitter_airline_sentiment, aes(x = Airline, y = Count)) +
+  geom_bar(
+    stat = "identity", position = position_stack(),
+    color = "white", fill = "blue"
+  ) + 
+  labs(title = ("Airline Sentiment Analysis")) +
+      theme_minimal() +
+  coord_flip()
+```
+As you can see from the plot that of the 6 major airlines United have the most negative reviews and US Airways has almost twice the negative reviews as positive. Southwest, Delta and US Virgin have more positive reviews than negative, however, Virgin America very few reviews compared to the other airlines.
+```{r}
+(twitter_airline_sentiment %>% 
+pivot_wider(names_from = Sentiment, values_from = Count, values_fill = 0) %>% 
+  mutate(Sentiment = positive + negative) %>% 
+  rename(Negative = negative, Positive = positive)) 
+```
+
+```{r}
+(airline_tweets %>% 
+  group_by(airline) %>% 
+  summarise(texts = n()) %>%
+  ungroup)
+```
+
+Summary:  It appears that airlines get more negative tweets than positive and I struggle to understand why.  I have flown quite a bit for work and for pleasure and it is rare that I have a negative experience.  I truly enjoy flying and I often feel for flight attendants as they try their best to accommodate 100+ passengers on most typical flights. I wish persons would be a little more appreciative of the convenience of flying as opposed to having to drive or sail to destinations.
+
+I really enjoyed sentimental analysis despite the issues that I had with my file not importing from github the way it does from my local drive and that I not successful referencing or citing the book in the first part of this exercise.
+
+
+
+
+
+
