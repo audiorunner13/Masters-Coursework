@@ -1,0 +1,50 @@
+---
+title: "Recommender System Discussion"
+author: "Peter Gatica"
+date: "4/21/2021"
+output:
+  html_document:
+    pandoc_args:
+    - --extract-media
+    - '.'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Recommender Systems - Spotify's Recommender System Analysis - https://www.spotify.com/us/home/ 
+
+For this assignment I looked at Spotify, is a streaming music application. It provides free music ad based listening or a purchased
+ad free based listening packages.  Much of this information provide in my assignment is from this blogpost which is an excellent
+read, https://towardsdatascience.com/how-spotify-recommends-your-new-favorite-artist-8c1850512af0#
+
+### Scenario analysis:
+
+**The target users**: Music lovers and music makers. 
+
+**Key users goals**: To listen to their favorites songs for free without having to purchase the entire album or purchase a plan to do
+the same without adds.  Spotify also provides music making tools to artists to provide them an audience.
+
+**How is Spotify meeting goals**: Spotify not only caters to providing the music a listener wants to hear and recommends music based on their tastes, they also want to cater to those few listeners that are open to not only hearing their musical tastes but are willing to listen to recommendations that differ from those tastes.  Spotify pays the artists royalties for the allowing them to stream their music but they also cater to the new artists who are wanting to find an audience.
+
+### Recommendation system - Spotify
+
+**Collaborative Filtering**
+
+It uses “nearest neighbors” to make predictions about what other users might enjoy.  Identifies your music tastes based on what you have listened to and looks for similar music that you have not listened to and makes recommendations.
+
+**Natural Language Processing (NLP)**
+
+This is used for song lyrics, playlists, blog posts, social media comments.  Spotify turns playlists into text documents and analyze how lyrical patterns relate to each other.  They have found that recommending songs based on common adjectives exposes new links that were previously unseen.
+
+**Audio Models**
+
+This article claims that this method holds the key to Spotify's success in the future.  When new music hits the marketplace and it is added to Spotify's music library how will it know whom to recommend it to.  Audio models process raw audio to produce a range of characteristics, including key, tempo, and even loudness.  Spotify can then compare this to similar songs in playlists and make its recommendation.
+
+### Recommendations to improve the site/app
+
+I really cannot come up with a way to improve Spotify's recommender system as it seems to working pretty well and outperforming other music streaming services.  The only recommendation I would make is the home page can get a little cluttered with all the recommendation songs or playlists.
+
+
+
