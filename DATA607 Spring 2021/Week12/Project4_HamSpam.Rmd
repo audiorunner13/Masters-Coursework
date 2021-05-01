@@ -1,0 +1,196 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidymodels)
+library(tidytext)
+library(tinytex)
+library(tidyverse)
+library(RCurl)
+library(knitr)
+library(R.utils)
+library(tm)
+```
+
+```{r}
+# Function to get tar file and untar
+get_tar_untar <- function(tar_file_nm)
+{
+  tarDir <- "https://spamassassin.apache.org/old/publiccorpus/"
+  tar_file <- paste0(tarDir,tar_file_nm)
+  download.file(tar_file,destfile=paste0(outDir,tar_file_nm))
+  untar(paste0(outDir,tar_file_nm),exdir = outDir)
+}
+```
+
+```{r}
+# Function to separate the message from the header
+get_email_body <- function(all_emails_dir)
+{
+  emails <- file(all_emails_dir, open="rt", encoding="latin1")
+  email_text <- readLines(emails)
+  email_body <- email_text[seq(which(email_text=="")[1]+1,length(email_text),1)]
+  close(emails)
+  return(paste(email_body, collapse="\n"))
+}
+```
+
+```{r}
+# Function to separate the message from the header
+get_all_emails <- function(email_list)
+{
+  email_list <- email_list[which(email_list!="cmds")]
+  all_email_text <- sapply(email_list, function(p) get_email_body(paste0(email_dir,p)))
+  return(all_email_text)
+}
+```
+
+
+```{r}
+# Set up Global parms 
+outDir <- "/Users/Audiorunner13/CUNY MSDS Course Work/DATA607 Spring 2021/Week12/Data/"
+ham_dir <- paste0(outDir, "easy_ham/")
+spam_dir <- paste0(outDir, "spam_2/")
+
+# Call function to get and untar tar file
+ham_file <- "20030228_easy_ham.tar.bz2"
+get_tar_untar(ham_file)
+
+spam_file <- "20050311_spam_2.tar.bz2"
+get_tar_untar(spam_file)
+```
+
+```{r}
+# Create corresponding list of file names in easy_ham directory
+ham_list = list.files(ham_dir)
+
+# Call functions to separate header from message body for ham email
+email_dir <- ham_dir
+all_email_body <- get_all_emails(ham_list)
+
+df_easy_ham <- as.data.frame(all_email_body)
+rownames(df_easy_ham) <- NULL
+df_easy_ham$spam <- 0
+```
+
+```{r}
+# Create corresponding list of file names in df_spam_2 directory
+spam_list = list.files(spam_dir)
+
+# Call functions to separate header from message body for df_spam_2 email
+email_dir <- spam_dir
+all_email_body <- get_all_emails(spam_list)
+
+df_spam_2 <- as.data.frame(all_email_body)
+rownames(df_spam_2) <- NULL
+df_spam_2$spam <- 1
+```
+
+```{r}
+names(df_easy_ham) <- c("text", "spam")
+names(df_spam_2) <- c("text", "spam")
+```
+
+```{r}
+head(df_easy_ham,10)
+```
+
+```{r}
+head(df_spam_2,10)
+```
+
+```{r}
+email_data <- rbind(df_easy_ham, df_spam_2)
+email_data_num   <- nrow(email_data)
+```
+
+```{r}
+table(email_data$spam)
+```
+
+
+```{r}
+#  email_body <- tolower(email_body)
+corpus <- VCorpus(VectorSource(email_data$text))
+corpus <- tm_map(corpus,content_transformer(tolower))
+corpus <- tm_map(corpus,PlainTextDocument)
+corpus <- tm_map(corpus,removePunctuation)
+corpus <- tm_map(corpus,removeWords,stopwords("eng"))
+corpus <- tm_map(corpus,stemDocument)
+```
+
+```{r}
+# Build a document term matrix from the corpus
+(dtm = DocumentTermMatrix(corpus))
+```
+
+```{r}
+# Remove sparse terms (that don't appear very often)
+(spdtm = removeSparseTerms(dtm, 0.95))
+```
+
+```{r include=FALSE}
+# Convert spdtm to a data frame
+emailsSparse = as.data.frame(as.matrix(spdtm))
+
+# make variable names of emailsSparse valid i.e. R-friendly (to convert variables names starting with numbers)
+colnames(emailsSparse) = make.names(colnames(emailsSparse))
+```
+
+```{r include=FALSE}
+# word stem that shows up most frequently across all the emails:
+sort(colSums(emailsSparse))
+```
+
+```{r}
+# convert the dependent variable to a factor
+emailsSparse$spam = as.factor(emailsSparse$spam)
+```
+
+```{r}
+# split the dataset into training and testing set
+email_split <- initial_split(emailsSparse, prop = 0.75, strata = spam)
+```
+
+```{r}
+email_training <- email_split %>% training()
+email_test <- email_split %>% testing()
+```
+
+```{r}
+nrow(email_training)
+nrow(email_test)
+```
+```{r}
+head(email_training,10)
+```
+
+```{r}
+glm_model <- logistic_reg() %>% 
+  set_engine("glm") %>%
+  set_mode("classification")
+```
+
+```{r message=FALSE, warning=FALSE}
+glm_fit <- glm_model %>% 
+  fit(spam ~ ., data=email_training)
+```
+
+```{r}
+(class_preds <- glm_fit %>% 
+  predict(new_data = email_test, type = "class"))
+```
+
+```{r}
+(prob_preds <- glm_fit %>%
+  predict(new_data = email_test, type = "prob"))
+```
+
+```{r}
+(spam_results <- email_test %>% 
+  select(spam) %>% 
+  bind_cols(class_preds, prob_preds))
+```
+
