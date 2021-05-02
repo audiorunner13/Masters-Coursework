@@ -1,0 +1,291 @@
+---
+title: "Project 4 - Document classification"
+author: "Peter Gatica"
+date: "May 1, 2021"
+output:
+  html_document:
+  prettydoc::html_pretty:
+    theme: cayman
+  pdf_document: default
+editor_options: 
+  chunk_output_type: inline
+---
+
+<!-- MAIN -->
+
+<!--match.arg(theme, themes()) : 
+    'arg' should be one of "default", "cerulean", "journal","flatly",
+    "darkly", "readable", "spacelab", "united", "cosmo", "lumen", "paper", 
+    "sandstone", "simplex", "yeti"  -------->
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(tidymodels)
+library(tidytext)
+library(tinytex)
+library(tidyverse)
+library(RCurl)
+library(knitr)
+library(R.utils)
+library(tm)
+library(rpart)
+library(rpart.plot)
+```
+
+<!-- (https://rdrr.io/cran/reactable/man/reactable.html) -->
+
+### Project 4 {.tabset .tabset-pills}
+
+
+
+#### Assignment Requirements{.tabset}
+
+It can be useful to be able to classify new "test" documents using already classified "training" documents.  A common example is using a corpus of labeled spam and ham (non-spam) e-mails to predict whether or not a new document is spam.  
+
+For this project, you can start with a spam/ham dataset, then predict the class of new documents (either withheld from the training dataset or from another source such as your own spam folder).   One example corpus:   https://spamassassin.apache.org/old/publiccorpus/ 
+
+For more adventurous students, you are welcome (encouraged!) to come up with a different set of documents (including scraped web pages!?) that have already been classified (e.g. tagged), then analyze these documents to predict how new documents should be classified.
+
+New!  Project 4 extra credit!  Students who use the relatively new tidymodels and textrecipes packages to complete their Project 4 work will automatically receive 5 extra credit points.  tidymodels is a significant improvement over Max Kuhn's older caret package.  Here are some resources to help you get up to speed on tidymodels and textrecipes.
+
+  Tidy Modeling with R, Max Kuhn and Julia Silge, https://www.tmwr.org/.  Julia Silge has also done a number of     tidymodels screencasts, including here: https://www.youtube.com/watch?v=BgWCuyrwD1s
+    https://github.com/tidymodels/textrecipes
+    DataCamp course, Modeling with TidyModels in R,
+    https://learn.datacamp.com/courses/modeling-with-tidymodels-in-r
+
+This assignment is due end of day on Saturday.  You may work in a small team if you want.  We will look at all of your solutions in our meetup next Wednesday.
+
+##### Grading rubric:
+
+* Project 4 -Document Classification (90 points)
+    Collaboration(extra credit)Use GitHub as a group, share code and project documentation.
+
+* Data Collection (5 points)
+    Use a corpus of labeled spam and ham (non-spam) e-mails
+
+* Data Storage (10 points)
+    Manually unzip the data (5 points)
+    Automatically unzip the data (5 points)
+
+* Project Code (70 points)
+    Predict the class of new documents withheldfrom the example corpus. (40 points) or
+    Come up with a different set of documents (including scraped web pages!?) (60 points)
+    
+* Use the dictionary of common words (10 points)
+    
+* Separate the message header from the message body (5 points)
+    
+* Analyze these documents to predict how new documents should be classified (algorithm)(10 points)
+    
+* Presentation (10 points)
+    
+* Extra Credit (1 point each)
+    Try out statistics and data models
+    Start early, ask many questions, actively post on the provided discussion forum, etc.
+    
+### Data Acquisition and Transformation {.tabset .tabset-pills}
+
+#### Define functions
+
+##### Function to get tar file and untar
+
+```{r}
+# Function to get tar file and untar
+get_tar_untar <- function(tar_file_nm)
+{
+  tarDir <- "https://spamassassin.apache.org/old/publiccorpus/"
+  tar_file <- paste0(tarDir,tar_file_nm)
+  download.file(tar_file,destfile=paste0(outDir,tar_file_nm))
+  untar(paste0(outDir,tar_file_nm),exdir = outDir)
+}
+```
+
+##### Function to separate the message from the header
+
+```{r}
+# Function to separate the message from the header
+get_email_body <- function(all_emails_dir)
+{
+  emails <- file(all_emails_dir, open="rt", encoding="latin1")
+  email_text <- readLines(emails)
+  email_body <- email_text[seq(which(email_text=="")[1]+1,length(email_text),1)]
+  close(emails)
+  return(paste(email_body, collapse="\n"))
+}
+```
+
+##### Function to get create a list of all emails that are untarred excluding files named cmds and to call function to separate the message from the header.
+
+```{r}
+# FFunction to get create a list of all emails that are untarred excluding files named cmds and to call
+# get_email_body 
+get_all_emails <- function(email_list)
+{
+  email_list <- email_list[which(email_list!="cmds")]
+  all_email_text <- sapply(email_list, function(p) get_email_body(paste0(email_dir,p)))
+  return(all_email_text)
+}
+```
+
+#### Download and untar data files
+
+```{r message=FALSE, warning=FALSE}
+# Set up Global parms 
+outDir <- "/Users/Audiorunner13/CUNY MSDS Course Work/DATA607 Spring 2021/Week12/Data/"
+ham_dir <- paste0(outDir, "easy_ham/")
+spam_dir <- paste0(outDir, "spam_2/")
+
+# Call function to get and untar tar file
+ham_file <- "20030228_easy_ham.tar.bz2"
+get_tar_untar(ham_file)
+
+spam_file <- "20050311_spam_2.tar.bz2"
+get_tar_untar(spam_file)
+```
+
+```{r}
+# Create corresponding list of file names in easy_ham directory
+ham_list = list.files(ham_dir)
+
+# Call functions to separate header from message body for ham email
+email_dir <- ham_dir
+all_email_body <- get_all_emails(ham_list)
+
+# Create a data frame of the ham emails and set a column spam to 0 to represent non-spam.
+df_easy_ham <- as.data.frame(all_email_body)
+rownames(df_easy_ham) <- NULL
+
+# Add a field spam to dataframe to signify that email is not spam
+df_easy_ham$spam <- 0
+```
+
+```{r}
+# Create corresponding list of file names in df_spam_2 directory
+spam_list = list.files(spam_dir)
+
+# Call functions to separate header from message body for df_spam_2 email
+email_dir <- spam_dir
+all_email_body <- get_all_emails(spam_list)
+
+# Create a data frame of the spam emails and set a column spam to 1 to represent spam.
+df_spam_2 <- as.data.frame(all_email_body)
+rownames(df_spam_2) <- NULL
+
+# Add a field spam to dataframe to signify that email is spam
+df_spam_2$spam <- 1
+```
+
+```{r}
+# Rename fields in each data frame.
+names(df_easy_ham) <- c("text", "spam")
+names(df_spam_2) <- c("text", "spam")
+```
+
+```{r}
+# combining dataframes and getting a record count of each classification
+email_data <- rbind(df_easy_ham, df_spam_2)
+email_data_num   <- nrow(email_data)
+table(email_data$spam)
+```
+
+#### Prepare the corpus to process
+
+```{r}
+# Build a new corpus variable called corpus
+corpus <- VCorpus(VectorSource(email_data$text))
+# convert the text to lowercase
+corpus <- tm_map(corpus,content_transformer(tolower))
+corpus <- tm_map(corpus,PlainTextDocument)
+# remove all punctuation from the corpus
+corpus <- tm_map(corpus,removePunctuation)
+# remove all English stopwords from the corpus
+corpus <- tm_map(corpus,removeWords,stopwords("en"))
+# stem the words in the corpus
+corpus <- tm_map(corpus,stemDocument)
+```
+
+Extract the word frequencies to be used in our prediction problem. Create a DocumentTermMatrix where the rows
+correspond to documents (emails), and the columns correspond to words.
+```{r echo=TRUE}
+# Extract the word frequencies to be used in our prediction problem. Create a DocumentTermMatrix where the rows # correspond to documents (emails), and the columns correspond to words.
+(dtm = DocumentTermMatrix(corpus))
+```
+
+Limit dtm to contain terms appearing in at least 5% of documents to obtain a more reasonable number of terms.
+Remove sparse terms (that don't appear very often)
+```{r}
+# Limit dtm to contain terms appearing in at least 5% of documents to obtain a more reasonable number of terms.
+# Remove sparse terms (that don't appear very often)
+(spdtm = removeSparseTerms(dtm, 0.95))
+```
+Convert spdtm to a data frame then make variable names of emailsSparse valid column names. Sort the word stems
+that shows up most frequently across all the emails.
+```{r include=FALSE}
+# Convert spdtm to a data frame
+emailsSparse = as.data.frame(as.matrix(spdtm))
+
+# make variable names of emailsSparse valid 
+colnames(emailsSparse) = make.names(colnames(emailsSparse))
+
+# word stem that shows up most frequently across all the emails:
+sort(colSums(emailsSparse))
+```
+
+Convert the dependent variable to a factor for processing purposes.
+```{r}
+# convert the dependent variable to a factor
+emailsSparse$spam = as.factor(emailsSparse$spam)
+```
+
+Split the dataset into training and testing datasets and get a row count.
+```{r}
+# split the dataset into training and testing datasets and get a row count
+email_split <- initial_split(emailsSparse, prop = 0.75, strata = spam)
+email_training <- email_split %>% training()
+email_test <- email_split %>% testing()
+nrow(email_training)
+nrow(email_test)
+```
+#### Run the Classification Model
+
+##### In this project I will be using the logistic regression algorithm.  The goal of logistic regression is to create distinct, non-overlapping regions along a set of predictor variable values.
+
+Create a logistic regression model
+```{r}
+# Create a logistic regression model
+glm_model <- logistic_reg() %>% 
+  set_engine("glm") %>%
+  set_mode("classification")
+```
+
+Train the model by using the fit function
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# Train the model by using the fit function
+glm_fit <- glm_model %>% 
+  fit(spam ~ ., data=email_training)
+```
+
+Predict outcome categories
+```{r}
+#Predict outcome categories
+(class_preds <- glm_fit %>% 
+  predict(new_data = email_test, type = "class"))
+```
+Calculate the probability of each prediction
+```{r}
+# Calculate the probability of each prediction
+(prob_preds <- glm_fit %>%
+  predict(new_data = email_test, type = "prob"))
+```
+Concactenate that three files into one for easier processing.
+```{r}
+spam_results <- email_test %>% 
+  select(spam) %>% 
+  bind_cols(class_preds, prob_preds)
+
+names(spam_results) <- c("Spam Indicator", "Classification Prediction","Spam Probability", "Ham Probability")
+```
+
+```{r}
+head(spam_results,10)
+```
+
