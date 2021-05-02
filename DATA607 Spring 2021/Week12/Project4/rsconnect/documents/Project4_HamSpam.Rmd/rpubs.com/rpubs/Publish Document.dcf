@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/763637/6b79a4b8958c47c081d0260ae1e03caa
+bundleId: https://api.rpubs.com/api/v1/document/763637/6b79a4b8958c47c081d0260ae1e03caa
+url: http://rpubs.com/audiorunner13/763637
+when: 1619932149.13529

@@ -1,6 +1,10 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Project 4 - Document classification"
+author: "Peter Gatica"
+date: "May 1, 2021"
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r message=FALSE, warning=FALSE}
@@ -70,6 +74,7 @@ ham_list = list.files(ham_dir)
 email_dir <- ham_dir
 all_email_body <- get_all_emails(ham_list)
 
+# Create a data frame of the ham emails and set a column spam to 0 to represent non-spam.
 df_easy_ham <- as.data.frame(all_email_body)
 rownames(df_easy_ham) <- NULL
 df_easy_ham$spam <- 0
@@ -83,12 +88,14 @@ spam_list = list.files(spam_dir)
 email_dir <- spam_dir
 all_email_body <- get_all_emails(spam_list)
 
+# Create a data frame of the spam emails and set a column spam to 1 to represent spam.
 df_spam_2 <- as.data.frame(all_email_body)
 rownames(df_spam_2) <- NULL
 df_spam_2$spam <- 1
 ```
 
 ```{r}
+# Rename fields in each data frame.
 names(df_easy_ham) <- c("text", "spam")
 names(df_spam_2) <- c("text", "spam")
 ```
@@ -102,31 +109,33 @@ head(df_spam_2,10)
 ```
 
 ```{r}
+# combining dataframes and getting a record count of each classification
 email_data <- rbind(df_easy_ham, df_spam_2)
 email_data_num   <- nrow(email_data)
-```
-
-```{r}
 table(email_data$spam)
 ```
 
-
 ```{r}
-#  email_body <- tolower(email_body)
+# Build a new corpus variable called corpus
 corpus <- VCorpus(VectorSource(email_data$text))
+# convert the text to lowercase
 corpus <- tm_map(corpus,content_transformer(tolower))
 corpus <- tm_map(corpus,PlainTextDocument)
+# remove all punctuation from the corpus
 corpus <- tm_map(corpus,removePunctuation)
-corpus <- tm_map(corpus,removeWords,stopwords("eng"))
+# remove all English stopwords from the corpus
+corpus <- tm_map(corpus,removeWords,stopwords("en"))
+# stem the words in the corpus
 corpus <- tm_map(corpus,stemDocument)
 ```
 
 ```{r}
-# Build a document term matrix from the corpus
+# Extract the word frequencies to be used in our prediction problem. Create a DocumentTermMatrix where the rows # correspond to documents (emails), and the columns correspond to words.
 (dtm = DocumentTermMatrix(corpus))
 ```
 
 ```{r}
+# Limit dtm to contain terms appearing in at least 5% of documents to obtain a more reasonable number of terms.
 # Remove sparse terms (that don't appear very often)
 (spdtm = removeSparseTerms(dtm, 0.95))
 ```
@@ -135,11 +144,9 @@ corpus <- tm_map(corpus,stemDocument)
 # Convert spdtm to a data frame
 emailsSparse = as.data.frame(as.matrix(spdtm))
 
-# make variable names of emailsSparse valid i.e. R-friendly (to convert variables names starting with numbers)
+# make variable names of emailsSparse valid 
 colnames(emailsSparse) = make.names(colnames(emailsSparse))
-```
 
-```{r include=FALSE}
 # word stem that shows up most frequently across all the emails:
 sort(colSums(emailsSparse))
 ```
@@ -150,40 +157,35 @@ emailsSparse$spam = as.factor(emailsSparse$spam)
 ```
 
 ```{r}
-# split the dataset into training and testing set
+# split the dataset into training and testing datasets and get a row count
 email_split <- initial_split(emailsSparse, prop = 0.75, strata = spam)
-```
-
-```{r}
 email_training <- email_split %>% training()
 email_test <- email_split %>% testing()
-```
-
-```{r}
 nrow(email_training)
 nrow(email_test)
 ```
-```{r}
-head(email_training,10)
-```
 
 ```{r}
+# Create a logistic regression model
 glm_model <- logistic_reg() %>% 
   set_engine("glm") %>%
   set_mode("classification")
 ```
 
 ```{r message=FALSE, warning=FALSE}
+# Train the model by using the fit function
 glm_fit <- glm_model %>% 
   fit(spam ~ ., data=email_training)
 ```
 
 ```{r}
+#Predict outcome categories
 (class_preds <- glm_fit %>% 
   predict(new_data = email_test, type = "class"))
 ```
 
 ```{r}
+# Calculate the probability of each prediction
 (prob_preds <- glm_fit %>%
   predict(new_data = email_test, type = "prob"))
 ```
