@@ -124,32 +124,46 @@ plot(bdims$hgt ~ bdims$sho_gi,
 
 (a) Write the equation of the regression line for predicting height.
 
-    Answer:  Linear model equation:  
-$\hat{height} = 105 + 0.61 x girth$
+  First calculate the slope:  ${\beta_{{}_{1}} =\frac{{}_{Sy}}{{}_{Sx}}R }$
+  
+  ${\ b_{1} = }$ (9.41 / 10.37) x 0.67
+  
+  ${\ b_{1} = }$ 0.91 x 0.67
+  
+  ${\ b_{1} = }$ 0.61
+  
+  Second calculate the point-slope equation using the (107.20,171.14):
+  
+  $y-y_{0\  }=\  b_{1}(x-x_{0})$
+  
+  y - 171.14 = 0.61(x - 107.20) --> Expand the right side and add 171.14 to each side
+  
+  Linear model equation:  $\hat{height} = 105cm + 0.61$ x girth
 
 (b) Interpret the slope and the intercept in this context.
 
-    Answer:  For every 100cm of girth, we would expect height to increase by 105cm
-    
+Answer:  For every 100cm of girth, we would expect height to increase by 61cm over 105cm.
+
 (c) Calculate $R^2$ of the regression line for predicting height from shoulder girth, and interpret it in the context of the application.
 
-    Answer:  R = 0.62 therefore R-sqaured = .45.  There is an increase of 45% in data variability by using the
-             information about the person's girth for predicting height using a linear model.
-             
+Answer:  R = 0.62 therefore $R^2$ = .45.  There is an increase of 45% in data variability by using the
+information about the persons girth for predicting height using a linear model.
+
 (d) A randomly selected student from your class has a shoulder girth of 100 cm. Predict the height of this student using the model.
-    Answer: height_hat =  105 + 0.61 x 100 = 166cm.  The prediction of the person's height based on
-             shoulder girth of 100cm is 166cm tall.
     
+Answer: $\hat{height}$ =  105 + 0.61 x 100 = 166cm.  The prediction of the person height based on shoulder girth of 100cm is 166cm tall.
+
 (e) The student from part (d) is 160 cm tall. Calculate the residual, and explain what this residual means.
 
-    Answer:  160cm =  105cm + 0.61 x girth.  
-             Subtract 105cm from both sides to get 55cm = .61x
-             Divide both sides by .61 and shoulder girth = 90.16 cm
-             
-(f) A one year old has a shoulder girth of 56 cm. Would it be appropriate to use this linear model to predict the height of this child?
+Answer:  $e_{x}=y_{x}-\hat{y_{x}}$
+  
+  $e_{x}=$ 160 - 166 = -66cm negative residual. The negative residual indicates that the linear model overpredicted the height for
+student in (d).
 
-    Answer:  It is not appropriate to use this linear model on a one year child since that child at a minium has 
-             to be 105cm tall.
+(f) A one year old has a shoulder girth of 56 cm. Would it be appropriate to use this linear model to predict the height of this child?
+  
+  Answer:  It is not appropriate to use this linear model on a one year child since that child at a minimum has 
+to be 105cm tall.
 
 
 
@@ -203,7 +217,7 @@ box()
 
 (a) Write out the linear model.
 
-    Answer:  heartweight_hat =  -0.357 + 4.034 x catweight
+Answer:  $\hat{heartweight}$ =  -0.357 + 4.034 x catweight
     
 (b) Interpret the intercept.
 
@@ -211,8 +225,8 @@ box()
 
 (d) Interpret $R^2$.
 
-        Answer: R-squared = 64.66%.  There is an increase of 64.66% in data variability by using the
-             information about the person's girth for predicting height using a linear model.
+Answer: $R^2$ = 64.66%.  There is an increase of 64.66% in data variability by using the
+  information about the person's girth for predicting height using a linear model.
              
 (e) Calculate the correlation coefficient.
         Answer: The square root of 0.6466 = 0.804.  The correlation coefficient (R) = .804 which
