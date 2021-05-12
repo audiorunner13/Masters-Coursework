@@ -1,0 +1,158 @@
+---
+title: "DATA 606 Data Project"
+author: "Peter Gatica"
+output:
+  html_notebook: default
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r load-packages, message=TRUE, include=FALSE}
+library(DATA606)
+library(tidyverse)
+library(openintro)
+library(ggplot2)
+```
+
+### Data Preparation
+
+The data I'm working with is in the openintro package and it's called `hfi`, 
+short for Human Freedom Index.
+
+
+### The data
+```{r}
+filename <- "/Users/Audiorunner13/CUNY MSDS Course Work/DATA606 Spring 2021/Final Project/Data/alc_hfi_2010_data.csv"
+alc_hfi_2010 <- read.csv(filename)
+```
+
+```{r}
+(alc_hfi_2010 <- na.omit(alc_hfi_2010))
+```
+
+```{r}
+summary(alc_hfi_2010)
+```
+
+#bar graph of top 10 soft skills as percentage
+```{r plot bar graph of top 15 alc consume, echo=TRUE, fig.keep='all', message=FALSE, results='hide'}
+head(alc_hfi_2010[order(-alc_hfi_2010$total_litres_of_pure_alcohol),],15) %>% 
+    ggplot(aes(y=reorder(countries,total_litres_of_pure_alcohol),x=total_litres_of_pure_alcohol,fill=countries)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=total_litres_of_pure_alcohol), vjust=1.0, color="black", 
+            position = position_dodge(0.9), size=3.0) +
+      labs(x = ("Total Alcohol Servings"),y = ("Country"),
+      title = ("Top 15 Countries in Alcohol Consumed (litres) in 2010 per Person")  )
+      theme_minimal()
+```
+
+```{r}
+# head(arrange(alc_hfi_2010),15)
+alc_hfi_2010[order(alc_hfi_2010$hf_rank),]
+```
+
+#bar graph of top 10 soft skills as percentage
+```{r echo=TRUE, fig.keep='all', message=FALSE, results='hide'}
+head(alc_hfi_2010[order(-alc_hfi_2010$hf_score),],15) %>% 
+    ggplot(aes(y=reorder(countries,hf_score),x=hf_score,fill=countries)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=hf_score), vjust=1.0, color="black", 
+            position = position_dodge(0.9), size=3.0) +
+      labs(x = ("Happiness Factor Rank"),y = ("Country"),
+      title = ("Top 15 Countries Happiness Factor Score")  )
+      theme_minimal()
+```
+
+```{r}
+ggplot(data = alc_hfi_2010, aes(x = hf_score, y = total_litres_of_pure_alcohol)) + geom_point()
+```
+
+## Is the amount of a country's alcohol consumption affected by how happy it's citizens are?
+
+In my dataset is a happiness factor ranking of countries around the world. This happiness ranking is based on certain 
+variables such as freedom of expression, freedom of religion and economic freedom.
+
+## The happiness factor alcohol linear model
+```{r mod_hf_alc}
+(mod_hf_alc <- lm(total_litres_of_pure_alcohol ~ hf_score, data = alc_hfi_2010))
+```
+
+```{r summary-mod_hf_alc}
+summary(mod_hf_alc)
+```
+
+```{r}
+ggplot(data = alc_hfi_2010, aes(x = hf_score, y = total_litres_of_pure_alcohol)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE)
+```
+
+You would think that countries with higher religious restrictions would translate to low amounts of alcohol consumed per person per year.  However, the plot above doesn't seem to support this assumption.  As you can see, there is a slight positive trend but the data really shows that there really is not.  Both positive and negative residuals are somewhat evenly distributed above and below the least of squares line and across the x-axis and are not tightly packed around the line.  This suggests a low correlation score which suggests a weak correlation to a positive linear trend. This assumption is supported by the very low R-squared value of less than 1% (0.009635).
+
+## The personal freedom factor alcohol linear model
+```{r mod_pf_alc}
+(mod_pf_alc <- lm(total_litres_of_pure_alcohol ~ pf_score, data = alc_hfi_2010))
+```
+
+```{r summary-mod_pf_alc}
+summary(mod_pf_alc)
+```
+
+```{r}
+ggplot(data = alc_hfi_2010, aes(y = total_litres_of_pure_alcohol, x = pf_score)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE)
+```
+
+## The economic factor alcohol linear model
+
+```{r mod_ef_alc}
+(mod_ef_alc <- lm(total_litres_of_pure_alcohol ~ ef_score, data = alc_hfi_2010))
+```
+
+```{r summary-mod_ef_alc}
+summary(mod_ef_alc)
+```
+
+```{r}
+ggplot(data = alc_hfi_2010, aes(y = total_litres_of_pure_alcohol, x = ef_score)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE)
+```
+
+#bar graph of top 10 soft skills as percentage
+```{r plot bar graph of top 15 beer servings, echo=TRUE, fig.keep='all', message=FALSE, results='hide'}
+head(alc_hfi_2010[order(-alc_hfi_2010$beer_servings),],15) %>% 
+    ggplot(aes(y=reorder(countries,beer_servings),x=beer_servings,fill=countries)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=beer_servings), vjust=1.0, color="black", 
+            position = position_dodge(0.9), size=3.0) +
+      labs(x = ("Beer Servings"),y = ("Country"),
+      title = ("Top 15 Countries 12 oz Beer Servings in 2010 per Person")  )
+      theme_minimal()
+```
+
+#bar graph of top 10 soft skills as percentage
+```{r plot bar graph of top 15 spirit servings,echo=TRUE, fig.keep='all', message=FALSE, results='hide'}
+head(alc_hfi_2010[order(-alc_hfi_2010$spirit_servings),],15) %>% 
+    ggplot(aes(y=reorder(countries,spirit_servings),x=spirit_servings,fill=countries)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=spirit_servings), vjust=1.0, color="black", 
+            position = position_dodge(0.9), size=3.0) +
+      labs(x = ("Spirit Servings"),y = ("Country"),
+      title = ("Top 14 Countries Spirit Servings (1.5 oz) in 2010 per Person")  )
+      theme_minimal()
+```
+
+#bar graph of top 10 soft skills as percentage
+```{r plot bar graph of top 15 wine servings,echo=TRUE, fig.keep='all', message=FALSE, results='hide'}
+head(alc_hfi_2010[order(-alc_hfi_2010$wine_servings),],15) %>% 
+    ggplot(aes(y=reorder(countries,wine_servings),x=wine_servings,fill=countries)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=wine_servings), vjust=1.0, color="black", 
+            position = position_dodge(0.9), size=3.0) +
+      labs(x = ("wine Servings"),y = ("Country"),
+      title = ("Top 14 Countries Wine (12 oz) Servings in 2010 per Person")  )
+      theme_minimal()
+```
