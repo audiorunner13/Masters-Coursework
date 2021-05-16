@@ -145,6 +145,24 @@ conf_mat(results,
          estimate = predicted)
 ```
 
+Plot the confusion matrix as a heatmap for our model.  
+
+```{r}
+ conf_mat(results,
+         truth = Future,
+         estimate = predicted) %>%
+  autoplot(type = 'heatmap')
+```
+
+Plot the confusion matrix as a mosaic for our model.  Here the height of the FALSE - FALSE combination represents the sensitivity wile the height of the TRUE - TRUE combination represents the specificity.
+
+```{r}
+conf_mat(results,
+         truth = Future,
+         estimate = predicted) %>%
+  autoplot(type = 'mosaic')
+```
+
 Line plots? Box plots?
 
 By using plotly, an interactice plotting library, it's possible to chart financial data such as ours. 
