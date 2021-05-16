@@ -1,0 +1,245 @@
+---
+title: "Untitled"
+author: "Connolly, Gatica, and Reeves"
+date: "5/13/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### The Premise
+
+We want to predict the performance of Ethereum against USD using historical data.  Generally, this practice is frowned upon because each new trading day changes the business cycles that produce following rates.  However, for the sake of this assignment, instead of using regressors, we are going to try to create a model based on categorization and feature engineering.
+
+Our data is a bit rough, with only daily readings of Open, High, Low, Close, Volume, (OHLC) and Block Size.  Finer-grain data is a bit expensive.
+
+Instead of predicting an exact exchange rate, we will simply try to determine if the following week from any data point is bullish (significantly increasing) or bearish (significantly decreasing).
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(zoo)
+library(smooth)
+library(TTR)
+library(tidymodels)
+library(ranger)
+library(plotly)
+library(quantmod)
+data <- "https://raw.githubusercontent.com/TheWerefriend/data607Final/main/ETH-USD.csv" %>%
+  read.csv(header = TRUE) %>%
+  tibble() %>%
+  mutate(Date = as.Date(Date, format = "%Y-%m-%d"))
+data <- data[, -6] %>%
+  mutate(Open = as.numeric(as.character(Open))) %>%
+  mutate(High = as.numeric(as.character(High))) %>%
+  mutate(Low = as.numeric(as.character(Low))) %>%
+  mutate(Close = as.numeric(as.character(Close))) %>%
+  mutate(Volume = as.numeric(as.character(Volume))) %>%
+  na.locf()
+# na.locf() from zoo replaces NA with previous non-NA value
+```
+
+### Feature engineering
+
+We will be using volume to establish a feature called Momentum, which is the rate of change of the volume of trades.  This will tell us if there is significant investor emotion regarding this asset.
+
+```{r}
+period <- 9
+data <- data %>%
+  arrange(Date) %>%
+  mutate(Momentum = Volume - lag(Volume,
+                                 n = period,
+                                 order_by = Date))
+head(data,20)
+```
+
+The next feature will be MACD (Moving Average Convergence/Divergence), which shows differences between exponential moving averages of two different periods.  If momentum is significant, this feature will tell us what direction the price is moving.
+
+```{r}
+fast <- 12
+slow <- 26
+data <- data %>%
+  arrange(Date) %>%
+  mutate(SMA12 = sma(Close, h = fast)$fitted[,1])
+MACD <- MACD(data$Close, nFast = fast, nSlow = slow)
+data <- cbind(data, MACD)
+```
+
+Next, we will include a Stochastic oscillator, which gives the relationship between the asset's closing price and the price range over the previous period.
+
+```{r}
+stochastic <- stoch(data$Close, nFastK = 14, nFastD = 3, nSlowD = 3)
+data <- cbind(data, stochastic)
+```
+
+Finally, we must look into the future to score the Outlook for each observation as bullish or not.
+
+```{r}
+data <- data %>%
+  arrange(Date) %>%
+  mutate(Future = as.factor(ifelse(lead(Close, n = 7) - Close > 0, TRUE, FALSE)))
+```
+
+We now must remove the trailing NAs we introduced with out lagged/leading indicators.
+
+```{r}
+data <- na.omit(data)
+```
+
+### The Model
+
+We will split the data at 2/3 and train a model (probably random forest) with independent variables Momentum, MACD, Stochastic, and dependent being the Outlook.
+
+```{r}
+split <- initial_split(data, strata = Future, p = 0.67)
+trainer <- training(split)
+tester <- testing(split)
+ethRecipe <- recipe(Future ~ Open + High + Low + Close +
+                      Volume + Momentum + SMA12 + macd +
+                      signal + fastK + fastD + slowD,
+                    data = trainer) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors()) %>%
+  prep(training = trainer)
+ethTrain <- juice(ethRecipe)
+ethTest <- bake(ethRecipe, tester)
+ethModel <- rand_forest(mode = "classification") %>%
+  set_engine("ranger")
+ethFit <- ethModel %>%
+  fit(Future ~ Open + High + Low + Close + Volume + 
+        Momentum + SMA12 + macd + signal + fastK + fastD + slowD,
+        data = tester)
+```
+
+### Scoring the Model
+
+Precision? Recall? F-measure?
+
+```{r}
+results <- ethTest %>%
+  select(Future) %>%
+  mutate(predicted = factor(ifelse(ethFit$fit$predictions[,1] > 0.5, TRUE, FALSE)))
+precision(results, truth = Future, estimate = predicted)
+recall(results, truth = Future, estimate = predicted)
+f_meas(results, truth = Future, estimate = predicted)
+```
+
+### Visualizations
+
+Confusion matrix? Line plots? Box plots?
+
+By using plotly, an interactice plotting library, it's possible to chart financial data such as ours. 
+
+## Candlestick Chart
+Source: https://plotly.com/r/candlestick-charts/
+
+```{r}
+data_cs <- as.data.frame(data)
+
+#cs <- data_cs %>% plot_ly(x = ~Date, type = "candlestick",
+#                          open = ~Open, close = ~Close,
+#                          high = ~High, low = ~Low)
+#cs <- cs %>% layout(title = "Near all-time $Eth Candlestick Chart")
+#cs
+```
+
+```{r}
+data_cs <- data.frame(data_idx=index(data_cs),coredata(data_cs))
+```
+
+```{r}
+# create Bollinger Bands
+bbands <- BBands(data_cs[,c("High","Low","Close")])
+```
+
+```{r}
+# join and subset data
+data_cs <- subset(cbind(data_cs, data.frame(bbands[,1:3])), Date >= "2015-08-06")
+```
+
+```{r}
+# colors column for increasing and decreasing
+for (i in 1:length(data_cs[,1])) {
+  if (data_cs$Close[i] >= data_cs$Open[i]) {
+      data_cs$direction[i] = 'Increasing'
+  } else {
+      data_cs$direction[i] = 'Decreasing'
+  }
+}
+```
+
+```{r}
+increase_color <- list(line = list(color = '#17BECF'))
+decrease_color <- list(line = list(color = '#7F7F7F'))
+```
+
+```{r}
+cs_chart <- data_cs %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~Open, close = ~Close,
+          high = ~High, low = ~Low, name = "ETH",
+          increasing = increase_color, decreasing = decrease_color)
+
+cs_chart <- cs_chart %>% add_lines(x = ~Date, y = ~dn, name = "B Bands",
+            line = list(color = '#ccc', width = 0.5),
+            legendgroup = "Bollinger Bands", inherit = F,
+            showlegend = FALSE, hoverinfo = "none") 
+
+cs_chart <- cs_chart %>% add_lines(x = ~Date, y = ~mavg, name = "Mv Avg",
+            line = list(color = '#E377C2', width = 0.5),
+            hoverinfo = "none", inherit = F)
+
+cs_chart <- cs_chart %>% layout(yaxis = list(title = "Price"))
+```
+
+```{r}
+# plot volume bar chart
+cs_chart_2 <- data_cs 
+cs_chart_2 <- cs_chart_2 %>% plot_ly(x=~Date, y=~Volume, type='bar', name = "ETH Volume",
+          color = ~direction, colors = c('#17BECF','#7F7F7F')) 
+cs_chart_2 <- cs_chart_2 %>% layout(yaxis = list(title = "Volume"))
+```
+
+```{r}
+# create rangeselector buttons
+range_sel <- list(visible = TRUE, x = 0.5, y = -0.055,
+           xanchor = 'center', yref = 'paper',
+           font = list(size = 9),
+           buttons = list(
+             list(count=1,
+                  label='RESET',
+                  step='all'),
+             list(count=1,
+                  label='1 YR',
+                  step='year',
+                  stepmode='backward'),
+             list(count=3,
+                  label='3 MO',
+                  step='month',
+                  stepmode='backward'),
+             list(count=1,
+                  label='1 MO',
+                  step='month',
+                  stepmode='backward')
+           ))
+```
+
+```{r}
+# subplot with shared x axis
+cs_chart <- subplot(cs_chart, cs_chart_2, heights = c(0.7,0.2), nrows=2,
+             shareX = TRUE, titleY = TRUE)
+cs_chart <- cs_chart %>% layout(title = paste("ETH: 2015-09-01 -",Sys.Date()),
+         xaxis = list(rangeselector = range_sel),
+         legend = list(orientation = 'h', x = 0.5, y = 1,
+                       xanchor = 'center', yref = 'paper',
+                       font = list(size = 10),
+                       bgcolor = 'transparent'))
+```
+
+```{r}
+cs_chart
+```
+
+### Conclusions
+
+This model is absolute crap.
