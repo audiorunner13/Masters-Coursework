@@ -127,7 +127,25 @@ f_meas(results, truth = Future, estimate = predicted)
 
 ### Visualizations
 
-Confusion matrix? Line plots? Box plots?
+Use the levels function to determine the positive and negative classes.  Here we see that FALSE is the positive class.
+
+```{r}
+levels(data[["Future"]])
+```
+
+Confusion matrix
+
+Confusion Matrix - Our model correctly classified 220 out of 332 predictions (66.3%).  Which translates into:
+  - 126 correct FALSE predictions
+  - 94  correct True predications
+
+```{r}
+conf_mat(results,
+         truth = Future,
+         estimate = predicted)
+```
+
+Line plots? Box plots?
 
 By using plotly, an interactice plotting library, it's possible to chart financial data such as ours. 
 
