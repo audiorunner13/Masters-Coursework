@@ -1,0 +1,242 @@
+---
+title: "Gatica-Project_Present"
+author: "Peter Gatica"
+date: "5/16/2021"
+output: powerpoint_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+<!-- MAIN -->
+
+<!--match.arg(theme, themes()) : 
+    'arg' should be one of "default", "cerulean", "journal","flatly",
+    "darkly", "readable", "spacelab", "united", "cosmo", "lumen", "paper", 
+    "sandstone", "simplex", "yeti"  -------->
+
+```{r load-packages, message=TRUE, include=FALSE}
+library(DATA606)
+library(tidyverse)
+library(openintro)
+library(ggplot2)
+```
+
+<!-- (https://rdrr.io/cran/reactable/man/reactable.html) -->
+
+## Part 1 - Introduction {.tabset .tabset-pills}
+### Abstract{.tabset}
+
+##### The purpose of this project is to explore the possible reasons that citizens in countries around the world consume alcohol.  After reviewing the alcohol consumption dataset, I did not see a meaningful way on how to run and interpret any linear models.  I will admit that this may be due to my inexperience with data analytics.  I found myself wondering what factors contribute to the consumption of alcohol in all countries.  Is there a correlation between certain factors like economic freedom, religious freedom or freedom of expression, or overall happiness with one’s life? I then thought that I would combine this dataset with a subset of data from the Human Freedom Index dataset for 2010.  I downloaded both the datasets from FiveThirtyEight and the CATO Institute for 2010 respectively.  I then manually combined variables from both datasets to use for my final project research.  I matched the data from both sources by country, taking personal freedom, economic freedom, and the overall happiness scores from each country and, matching by country, I took beer, wine, spirit servings and total alcohol consumption in liters per person.  I omitted any records that contained an N/A in fields to avoid inaccurate estimates in my linear models.  I proceeded to run linear models on how happiness scores affect the amount of alcohol consumption for each country in the dataset. I did the same for each personal freedom and economic freedom scores.  I also interpret the correlation coefficient and R-squared results for each model.  I believe that this kind of research can be very useful around the world to identify countries that may have a propensity for alcohol abuse and create programs to help curtail alcoholism and perhaps other health and social issues that may result from alcohol abuse.
+
+## Part 2 - Data {.tabset .tabset-pills}
+
+### Data Sources  
+
+##### [FiveThirtyEight](https://github.com/fivethirtyeight/data/tree/master/alcohol-consumption) - The dataset that I am using as one of my sources was found that the FiveThirtyEight github link.  This dataset on alcohol consumption by country for 2010 is the data behind the article [Dear Mona Followup:Where Do People Drink The Most Beer, Wine and Spirits](https://fivethirtyeight.com/features/dear-mona-followup-where-do-people-drink-the-most-beer-wine-and-spirits/).  The data was collected by the [World Health Organization](https://www.who.int/)
+
+##### The [Human Freedom Index](https://www.cato.org/human-freedom-index/2020) presents the state of human freedom in the world based on a broad measure that encompasses personal, civil, and economic freedom. Human freedom is a social concept that recognizes the dignity of individuals and is defined here as negative liberty or the absence of coercive constraint. Because freedom is inherently valuable and plays a role in human progress, it is worth measuring carefully. The Human Freedom Index is a resource that can help to more objectively observe relationships between freedom and other social and economic phenomena, as well as the ways in which the various dimensions of freedom interact with one another.
+
+##### The report is co‐published by the [Cato Institute](https://www.cato.org/human-freedom-index/2020) and the [Fraser Institute](https://www.fraserinstitute.org/).
+
+### Data collection 
+
+```{r Source the movie rank survey file to load}
+filename <- getURL("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA606%20Spring2021/Final%20Project/Data/alc_hfi_2010_data.csv")
+alc_hfi_2010 <- read.csv(text=filename)
+```
+
+```{r}
+alc_hfi_2010 <- na.omit(alc_hfi_2010)
+```
+#### Description of the dependent variable (what is being measured?)
+
+##### The response variable is amount of alcohol (liters) consumed per person by country in 2010 and variable is numerical.
+
+#### Description of the independent variable (what is being measured?, include at least 2 variables)
+
+##### The explanatory variables are happiness score (hf_score), personal freedom score (pf_score), and economic freedom score (ef_score).  Personal freedom and economic scores contribute to the overall happiness score of a country's citizens.  All are numerical.
+
+#### Research question 
+
+##### Does the happiness factor score of a country's citizens affect the amount of alcohol consumed by that country?  How do personal expression and economic freedoms affect the amount of alcohol consumed by an individual in certain countries?
+
+#### Type of study 
+
+##### This is an observational study.
+
+#### Summary Statistics of source dataset
+```{r}
+summary(alc_hfi_2010)
+```
+
+## Part 3 - Exploratory data analysis {.tabset .tabset-pills}
+
+### Appropriate Visualizations
+
+#### The bar graph below shows the top 15 countries in alcohol consumption (liters) per person in 2010.
+```{r plot bar graph of top 15 alc consume, echo=TRUE, fig.keep='all', message=FALSE, results='hide'}
+head(alc_hfi_2010[order(-alc_hfi_2010$total_litres_of_pure_alcohol),],15) %>% 
+    ggplot(aes(y=reorder(countries,total_litres_of_pure_alcohol),x=total_litres_of_pure_alcohol,fill=countries)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=total_litres_of_pure_alcohol), vjust=1.0, color="black", 
+            position = position_dodge(0.9), size=3.0) +
+      labs(x = ("Total Alcohol (liters) Consumed"),y = ("Country"),
+      title = ("Top 15 Countries in Alcohol Consumed (liters) in 2010 per Person")  )
+      theme_minimal()
+```
+
+#### The bar graph below shows the 15 countries with highest happiness score in 2010.
+```{r echo=TRUE, fig.keep='all', message=FALSE, results='hide'}
+head(alc_hfi_2010[order(-alc_hfi_2010$hf_score),],15) %>% 
+    ggplot(aes(y=reorder(countries,hf_score),x=hf_score,fill=countries)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=hf_score), vjust=1.0, color="black", 
+            position = position_dodge(0.9), size=3.0) +
+      labs(x = ("Happiness Factor Rank"),y = ("Country"),
+      title = ("Top 15 Countries Happiness Factor Score")  )
+      theme_minimal()
+```
+
+### Statistical Output
+##### An initial glance at the scatterplot below does shows a possible linear correlation between the happiness factor and the total alcohol consumed (liters) per person.  The plots have a wide spread and are not tightly packed.  The relationship looks linear, we can quantify the strength of the relationship with the correlation coefficient.
+
+```{r echo=TRUE, fig.keep='all', message=FALSE, results='hide'}
+ggplot(data = alc_hfi_2010, aes(x = hf_score, y = total_litres_of_pure_alcohol)) + geom_point() +
+  labs(x = ("Happiness Factor Score"),y = ("Total Alcohol Consumed"))
+      theme_minimal()
+```
+
+```{r cor}
+alc_hfi_2010 %>%
+  summarise(cor(hf_score, total_litres_of_pure_alcohol, use = "complete.obs"))
+```
+
+##### The correlation coefficient is moderately strong at 65%. The calculated $R^2$ which is a more reliable indicator of the correlation is a moderate 42%.   Next let's see if these values change when we run a linear model on the dataset.
+
+### The Happiness Factor 
+
+#### Is the amount of a country's alcohol consumption affected by how happy it's citizens are?
+
+##### In my dataset is a happiness factor score of countries around the world. This happiness factor score is based on certain  variables such as freedom of expression, freedom of religion and economic freedom to name a few.  There many more variables that go into the happiness factor score but for purposes of this project I will only consider the ones I just mentioned and extracted.
+
+#### The happiness factor to alcohol linear model
+
+```{r mod_hf_alc}
+(mod_hf_alc <- lm(total_litres_of_pure_alcohol ~ hf_score, data = alc_hfi_2010))
+```
+
+```{r summary-mod_hf_alc}
+summary(mod_hf_alc)
+```
+##### Running a linear model verifies that there is a slightly moderate correlation of 41.4% between a country's happiness score and the amount of alcohol that its citizens consume.  The scatterplot with the least sum of the squares line can illustrate that correlation.  It does show a positive linear relationship, however, based on how the points are not tightly packed along the blue line suggests that there is not a overly strong correlation.  Let's next look at the correlation between alcohol consumption and personal freedom.
+```{r}
+ggplot(data = alc_hfi_2010, aes(x = hf_score, y = total_litres_of_pure_alcohol)) +
+  geom_point() + stat_smooth(method = "lm", se = FALSE) +
+  labs(x = ("Happiness Factor Score"),y = ("Total Alcohol (liters) Consumed"))
+```
+
+### Personal Freedom Factor
+
+##### When considering the personal freedom score alone, the correlation coefficient is stronger at 69.5%. The calculated $R^2$ which is a more reliable indicator of the correlation increases to 48.3%.
+```{r cor pf_score}
+alc_hfi_2010 %>%
+  summarise(cor(pf_score, total_litres_of_pure_alcohol, use = "complete.obs"))
+```
+
+#### The personal freedom factor alcohol linear model
+```{r mod_pf_alc}
+(mod_pf_alc <- lm(total_litres_of_pure_alcohol ~ pf_score, data = alc_hfi_2010))
+```
+
+```{r summary-mod_pf_alc}
+summary(mod_pf_alc)
+```
+##### Running a linear model on the personal freedom score alone verifies that there is a more moderate $R^2$ of 48% between a country's personal freedom score and the amount of alcohol that its citizens consume.  The scatterplot with the least sum of the squares line does show the points are little more tightly packed along the blue line suggests a more constant variability than the happiness factor correlation.  Finally, let's explore the correlation between alcohol consumption and economic freedom.
+```{r}
+ggplot(data = alc_hfi_2010, aes(y = total_litres_of_pure_alcohol, x = pf_score)) +
+  geom_point() +  stat_smooth(method = "lm", se = FALSE) +
+  labs(x = ("Personal Freedom Factor Score"),y = ("Total Alcohol (liters) Consumed"))
+```
+
+### Economic Freedom Factor
+
+##### Considering the economic freedom score alone, the correlation coefficient is stronger at 41.6%. The calculated $R^2$ which is a more reliable indicator of the correlation drops to a very 17% suggesting a very low correlation between economic freedom and the amount of alcohol that a person consumes.
+```{r cor ef_score}
+alc_hfi_2010 %>%
+  summarise(cor(ef_score, total_litres_of_pure_alcohol, use = "complete.obs"))
+```
+
+#### The economic factor alcohol linear model
+```{r mod_ef_alc}
+(mod_ef_alc <- lm(total_litres_of_pure_alcohol ~ ef_score, data = alc_hfi_2010))
+```
+
+```{r summary-mod_ef_alc}
+summary(mod_ef_alc)
+```
+##### Running a linear model on the economic freedom score alone verifies that there is a very weak $R^2$ of 16.7% between a country's economic freedom score and the amount of alcohol that its citizens consume.  The scatterplot with the least sum of the squares line show this weak correlation.  One can see that the points are widely scattered and do not run a long the length of the blue as do the prior two models. 
+
+```{r}
+ggplot(data = alc_hfi_2010, aes(y = total_litres_of_pure_alcohol, x = ef_score)) +
+  geom_point() +   stat_smooth(method = "lm", se = FALSE) +
+  labs(x = ("Economic Freedom Factor Score"),y = ("Total Alcohol (liters) Consumed"))
+```
+
+
+## Part 4 - Conclusion
+
+#### I was surprised to find that the happiness factor for each country to did not have a much stronger correlation to the amount of alcohol consumed by its citizens.  It was only a moderate correlation. I had expected to see a tighter gathering around the sum of the least squares line showing that people with a lower happiness factor drank more. This was not the case in any of the scenarios as shown by the higher negative residuals at the lower ends of the plots.  I also expected that the higher a happiness factor would decrease the amount of alcohol consumed by persons, however, it was the opposite.  The higher the happiness factor the more positive residuals are.
+
+### Why is the analysis important?
+#### I believe that this kind of research can be very useful around the world to identify countries that may have a propensity for alcohol abuse and create programs to help curtail alcoholism and perhaps other health and social issues that may result from alcohol abuse.
+
+####
+
+### Limitations of the analysis?
+#### I have to say that the limitations of the analysis is reflective of my experience with data analystics and visualization.  With more experience, I could easily apply the mutiple variable method of linear modeling for more accurate determination of the correlation between the different happiness index factors and a country's alcohol consumption by its citizens.  I certainly would delve more into which of the different factors are the greater contributors to alcohol consumption.  My attempt is a very elementary one at best.
+
+### References
+
+##### [Dear Mona](https://fivethirtyeight.com/contributors/mona-chalabi/) is Mona Chalabi, a former contributor on [FiveThirtyEight](https://fivethirtyeight.com/) posting articles that answer readers' questions as well as postings regarding data and data analytics.
+
+####
+
+### Appendix
+#####Bar graph of the top 15 countries with the highest beer consumption per person in 2010.
+```{r plot bar graph of top 15 beer servings, echo=TRUE, fig.keep='all', message=FALSE, results='hide'}
+head(alc_hfi_2010[order(-alc_hfi_2010$beer_servings),],15) %>% 
+    ggplot(aes(y=reorder(countries,beer_servings),x=beer_servings,fill=countries)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=beer_servings), vjust=1.0, color="black", 
+            position = position_dodge(0.9), size=3.0) +
+      labs(x = ("Beer Servings"),y = ("Country"),
+      title = ("Top 15 Countries 12 oz Beer Servings in 2010 per Person")  )
+      theme_minimal()
+```
+
+##### Bar graph of the top 15 countries with the highest spirits consumption per person in 2010.
+```{r plot bar graph of top 15 spirit servings,echo=TRUE, fig.keep='all', message=FALSE, results='hide'}
+head(alc_hfi_2010[order(-alc_hfi_2010$spirit_servings),],15) %>% 
+    ggplot(aes(y=reorder(countries,spirit_servings),x=spirit_servings,fill=countries)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=spirit_servings), vjust=1.0, color="black", 
+            position = position_dodge(0.9), size=3.0) +
+      labs(x = ("Spirit Servings"),y = ("Country"),
+      title = ("Top 14 Countries Spirit Servings (1.5 oz) in 2010 per Person")  )
+      theme_minimal()
+```
+
+##### Bar graph of the top 15 countries with the highest wine consumption per person in 2010.
+```{r plot bar graph of top 15 wine servings,echo=TRUE, fig.keep='all', message=FALSE, results='hide'}
+head(alc_hfi_2010[order(-alc_hfi_2010$wine_servings),],15) %>% 
+    ggplot(aes(y=reorder(countries,wine_servings),x=wine_servings,fill=countries)) +
+      geom_bar(stat = 'identity',position=position_dodge()) +
+      geom_text(aes(label=wine_servings), vjust=1.0, color="black", 
+            position = position_dodge(0.9), size=3.0) +
+      labs(x = ("wine Servings"),y = ("Country"),
+      title = ("Top 14 Countries Wine (12 oz) Servings in 2010 per Person")  )
+      theme_minimal()
+```
+
