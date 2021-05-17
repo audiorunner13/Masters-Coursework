@@ -137,7 +137,7 @@ Confusion matrix
 
 Confusion Matrix - Our model correctly classified 220 out of 332 predictions (66.3%).  Which translates into:
   - 126 correct FALSE predictions
-  - 94  correct True predications
+  - 87  correct True predications
 
 ```{r}
 conf_mat(results,
@@ -163,7 +163,46 @@ conf_mat(results,
   autoplot(type = 'mosaic')
 ```
 
-Line plots? Box plots?
+```{r}
+eth_class_preds <- ethFit %>%
+  predict(new_data = tester,
+          type = 'class')
+```
+
+```{r}
+eth_prob_preds <- ethFit %>%
+  predict(new_data = tester,
+          type = 'prob')
+```
+
+```{r}
+eth_results_tester <- tester %>%
+  select(Future) %>%
+  bind_cols(eth_class_preds, eth_prob_preds)
+```
+
+The default probability threshold in binary classification is 0.5. The positive class in this model is FALSE as shown by the levels() function above. This means that if the .pred_FALSE >= 0.5 then .pred_class is set to "FALSE" by the predict() function.
+
+Plot the receiver operating characteristic (ROC) curve which we use to visualize performance across a range of probability thresholds.  Ideally, we would like to see the points as close to the upper left edge of the plot (0,1) as possible.  This would indicate a strong performance of our model.  However, one can see here that the points lie close the diagonal were sensitivity equals specificity thus indicating a strong performing model. 
+
+```{r}
+eth_results_tester %>%
+  roc_curve(truth = Future, .pred_FALSE) %>% 
+  autoplot()
+```
+
+We can summarize the ROC curve by calculating the area under the curve (AUC).  In this case, the ROC AUC is 0.55 which translates to an A in the letter grade scale below.
+
+* A - [0.9, 1]
+* B - [0.8, 0.9)
+* C - [0.7, 0.8)
+* D - [0.6, 0.7)
+* F - [0.5, 0.6)
+
+```{r}
+roc_auc(eth_results_tester,
+        truth = Future, .pred_FALSE)
+```
 
 By using plotly, an interactice plotting library, it's possible to chart financial data such as ours. 
 

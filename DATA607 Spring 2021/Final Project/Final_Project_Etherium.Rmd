@@ -1,0 +1,283 @@
+---
+title: "(Not) Predicting Ethereum / USD"
+author: "Connolly, Gatica, and Reeves"
+date: "5/13/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### The Premise
+
+We want to predict the performance of Ethereum against USD using historical data.  Generally, this practice is frowned upon because each new trading day changes the business cycles that produce following rates.  However, for the sake of this assignment, instead of using regressors, we are going to try to create a model based on categorization and feature engineering.
+
+Our data is a bit rough, with only daily readings of Open, High, Low, Close, Volume, (OHLC) and Block Size.  Finer-grain data is a bit expensive.
+
+Instead of predicting an exact exchange rate, we will simply try to determine if the following week from any data point is bullish (significantly increasing) or bearish (significantly decreasing).
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(zoo)
+library(smooth)
+library(TTR)
+library(tidymodels)
+library(plotly)
+data <- "https://raw.githubusercontent.com/TheWerefriend/data607Final/main/ETH-USD.csv" %>%
+  read.csv(header = TRUE) %>%
+  tibble() %>%
+  mutate(Date = as.Date(Date, format = "%Y-%m-%d"))
+data <- data[, -6] %>%
+  mutate(Open = as.numeric(as.character(Open))) %>%
+  mutate(High = as.numeric(as.character(High))) %>%
+  mutate(Low = as.numeric(as.character(Low))) %>%
+  mutate(Close = as.numeric(as.character(Close))) %>%
+  mutate(Volume = as.numeric(as.character(Volume))) %>%
+  na.locf()
+# na.locf() from zoo replaces NA with previous non-NA value
+```
+
+### Feature engineering
+
+We will be using volume to establish a feature called Momentum, which is the rate of change of the volume of trades.  This will tell us if there is significant investor emotion regarding this asset.
+
+```{r}
+data <- data %>%
+  arrange(Date) %>%
+  mutate(Momentum = ROC(Volume, n = 7, type = "continuous"))
+```
+
+The next feature will be MACD (Moving Average Convergence/Divergence), which shows differences between exponential moving averages of two different periods.  If momentum is significant, this feature will tell us what direction the price is moving.
+
+```{r}
+fast <- 7
+slow <- 30
+data <- data %>%
+  arrange(Date) %>%
+  mutate(SMA12 = sma(Close, h = fast)$fitted[,1])
+MACD <- MACD(data$Close, nFast = fast, nSlow = slow)
+data <- cbind(data, MACD)
+```
+
+Next, we will include a Stochastic oscillator, which gives the relationship between the asset's closing price and the price range over the previous period.
+
+```{r}
+stochastic <- stoch(data$Close, nFastK = 14,
+                    nFastD = 3, nSlowD = 3)
+data <- cbind(data, stochastic)
+```
+
+Finally, we must look into the future to score the Outlook for each observation as bullish or not.
+
+```{r}
+data <- data %>%
+  arrange(Date) %>%
+  mutate(Future = as.factor(ifelse(
+    lead(Close, n = 7) - Close > 0,
+    TRUE, FALSE)))
+```
+
+We now must remove the trailing NAs we introduced with out lagged/leading indicators.
+
+```{r}
+data <- na.omit(data)
+```
+
+### The Model
+
+We will split the data at 2/3 and train a model (probably random forest) with independent variables Momentum, MACD, Stochastic, and dependent being the Outlook.
+
+```{r}
+split <- initial_split(data, strata = Future, p = 0.67)
+trainer <- training(split)
+tester <- testing(split)
+ethRecipe <- recipe(Future ~ Momentum + macd +
+                      signal + fastK + fastD + slowD,
+                    data = trainer) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors()) %>%
+  prep(training = trainer)
+ethTrain <- juice(ethRecipe)
+ethTest <- bake(ethRecipe, tester)
+ethModel <- rand_forest(mode = "classification") %>%
+  set_engine("ranger")
+ethFit <- ethModel %>%
+  fit(Future ~ Momentum + macd + signal + fastK + 
+        fastD + slowD, data = tester)
+```
+
+### Scoring the Model
+
+Precision? Recall? F-measure?
+
+```{r}
+results <- ethTest %>%
+  select(Future) %>%
+  mutate(predicted = factor(ifelse(ethFit$fit$predictions[,1] > 0.6, TRUE, FALSE)))
+precision(results, truth = Future, estimate = predicted)
+recall(results, truth = Future, estimate = predicted)
+f_meas(results, truth = Future, estimate = predicted)
+```
+
+### Visualizations
+
+Use the levels function to determine the positive and negative classes.  Here we see that FALSE is the positive class.
+
+```{r}
+levels(data[["Future"]])
+```
+
+Confusion matrix Results
+
+```{r}
+conf_mat(results,
+         truth = Future,
+         estimate = predicted)
+```
+
+Plot the confusion matrix as a heatmap for our model.  
+
+```{r}
+ conf_mat(results,
+         truth = Future,
+         estimate = predicted) %>%
+  autoplot(type = 'heatmap')
+```
+
+Plot the confusion matrix as a mosaic for our model.  Here the height of the FALSE - FALSE combination represents the sensitivity while the height of the TRUE - TRUE combination represents the specificity.
+
+```{r}
+conf_mat(results,
+         truth = Future,
+         estimate = predicted) %>%
+  autoplot(type = 'mosaic')
+```
+
+```{r}
+eth_class_preds <- ethFit %>%
+  predict(new_data = tester,
+          type = 'class')
+eth_prob_preds <- ethFit %>%
+  predict(new_data = tester,
+          type = 'prob')
+eth_results_tester <- tester %>%
+  select(Future) %>%
+  bind_cols(eth_class_preds, eth_prob_preds)
+```
+
+The default probability threshold in binary classification is 0.5. The positive class in this model is FALSE as shown by the levels() function above. This means that if the .pred_FALSE >= 0.5 then .pred_class is set to "FALSE" by the predict() function.
+
+Plot the receiver operating characteristic (ROC) curve which we use to visualize performance across a range of probability thresholds.  Ideally, we would like to see the points as close to the upper left edge of the plot (0,1) as possible.  This would indicate a strong performance of our model as is the case here.  However, since the positive class is FALSE this would indicate that we have a poor performing model since we predict more FALSE as true positives. 
+
+```{r}
+eth_results_tester %>%
+  roc_curve(truth = Future, .pred_FALSE) %>% 
+  autoplot()
+```
+
+We can summarize the ROC curve by calculating the area under the curve (AUC).  In this case, the ROC AUC is 0.999 which translates to an A in the letter grade scale below.
+
+* A - [0.9, 1]
+* B - [0.8, 0.9)
+* C - [0.7, 0.8)
+* D - [0.6, 0.7)
+* F - [0.5, 0.6)
+
+```{r}
+roc_auc(eth_results_tester,
+        truth = Future, .pred_FALSE)
+```
+
+By using plotly, an interactice plotting library, it's possible to chart financial data such as ours. 
+
+## Candlestick Chart
+Source: https://plotly.com/r/candlestick-charts/
+
+```{r}
+data_cs <- as.data.frame(data)
+```
+
+```{r}
+data_cs <- data.frame(data_idx=index(data_cs),coredata(data_cs))
+# create Bollinger Bands
+bbands <- BBands(data_cs[,c("High","Low","Close")])
+# join and subset data
+data_cs <- subset(cbind(data_cs, data.frame(bbands[,1:3])), Date >= "2015-08-06")
+# colors column for increasing and decreasing
+for (i in 1:length(data_cs[,1])) {
+  if (data_cs$Close[i] >= data_cs$Open[i]) {
+      data_cs$direction[i] = 'Increasing'
+  } else {
+      data_cs$direction[i] = 'Decreasing'
+  }
+}
+increase_color <- list(line = list(color = '#17BECF'))
+decrease_color <- list(line = list(color = '#7F7F7F'))
+```
+
+```{r}
+cs_chart <- data_cs %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~Open, close = ~Close,
+          high = ~High, low = ~Low, name = "ETH",
+          increasing = increase_color, decreasing = decrease_color)
+cs_chart <- cs_chart %>% add_lines(x = ~Date, y = ~dn, name = "B Bands",
+            line = list(color = '#ccc', width = 0.5),
+            legendgroup = "Bollinger Bands", inherit = F,
+            showlegend = FALSE, hoverinfo = "none") 
+cs_chart <- cs_chart %>% add_lines(x = ~Date, y = ~mavg, name = "Mv Avg",
+            line = list(color = '#E377C2', width = 0.5),
+            hoverinfo = "none", inherit = F)
+cs_chart <- cs_chart %>% layout(yaxis = list(title = "Price"))
+# plot volume bar chart
+cs_chart_2 <- data_cs 
+cs_chart_2 <- cs_chart_2 %>% plot_ly(x=~Date, y=~Volume, type='bar', name = "ETH Volume",
+          color = ~direction, colors = c('#17BECF','#7F7F7F')) 
+cs_chart_2 <- cs_chart_2 %>% layout(yaxis = list(title = "Volume"))
+```
+
+```{r}
+# create rangeselector buttons
+range_sel <- list(visible = TRUE, x = 0.5, y = -0.055,
+           xanchor = 'center', yref = 'paper',
+           font = list(size = 9),
+           buttons = list(
+             list(count=1,
+                  label='RESET',
+                  step='all'),
+             list(count=1,
+                  label='1 YR',
+                  step='year',
+                  stepmode='backward'),
+             list(count=3,
+                  label='3 MO',
+                  step='month',
+                  stepmode='backward'),
+             list(count=1,
+                  label='1 MO',
+                  step='month',
+                  stepmode='backward')
+           ))
+```
+
+```{r}
+# subplot with shared x axis
+cs_chart <- subplot(cs_chart, cs_chart_2, heights = c(0.7,0.2), nrows=2,
+             shareX = TRUE, titleY = TRUE)
+cs_chart <- cs_chart %>% layout(title = paste("ETH: 2015-09-01 -",Sys.Date()),
+         xaxis = list(rangeselector = range_sel),
+         legend = list(orientation = 'h', x = 0.5, y = 1,
+                       xanchor = 'center', yref = 'paper',
+                       font = list(size = 10),
+                       bgcolor = 'transparent'))
+cs_chart
+```
+
+### Conclusions
+
+This model is absolutely useless for predicting Ethereum.  It seems, no combination of changes in parameters, models, or hyperparameters can solve this issue.  What we have stumbled upon is the age-old wisdom that you simply cannot use historical timeseries data to predict new data points.  Don't try.  Each new piece of data represents changes to the global process which creates the asset's movement.  There is no established cycle, there is no reason to believe that past performance indicates future performance.
+
+While these forms of technical analysis could work for well-establish stocks or bonds (to a very limited extent), there is a strong need for leading indicators that do not come from the timeseries data.
+
