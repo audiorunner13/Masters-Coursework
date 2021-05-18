@@ -40,6 +40,11 @@ data <- data[, -6] %>%
 # na.locf() from zoo replaces NA with previous non-NA value
 ```
 
+```{r}
+set.seed(1337)
+```
+
+
 ### Feature engineering
 
 We will be using volume to establish a feature called Momentum, which is the rate of change of the volume of trades.  This will tell us if there is significant investor emotion regarding this asset.
@@ -132,6 +137,11 @@ levels(data[["Future"]])
 
 Confusion matrix Results
 
+Confusion Matrix - Our model correctly classified 220 out of 663 predictions (44.3%).  Which translates into:
+  
+  - 240 correct FALSE predictions
+  - 54  correct True predictions
+
 ```{r}
 conf_mat(results,
          truth = Future,
@@ -170,7 +180,7 @@ eth_results_tester <- tester %>%
 
 The default probability threshold in binary classification is 0.5. The positive class in this model is FALSE as shown by the levels() function above. This means that if the .pred_FALSE >= 0.5 then .pred_class is set to "FALSE" by the predict() function.
 
-Plot the receiver operating characteristic (ROC) curve which we use to visualize performance across a range of probability thresholds.  Ideally, we would like to see the points as close to the upper left edge of the plot (0,1) as possible.  This would indicate a strong performance of our model as is the case here.  However, since the positive class is FALSE this would indicate that we have a poor performing model since we predict more FALSE as true positives. 
+Plot the receiver operating characteristic (ROC) curve which we use to visualize performance across a range of probability thresholds.  Ideally, we would like to see the points as close to the upper left edge of the plot (0,1) as possible.  This would indicate a strong performance of our model as is the case here.  However, since the positive class is FALSE discourage the use of this model to predict Ethereum's performance against the USD since we predict more FALSE as true positives. 
 
 ```{r}
 eth_results_tester %>%
