@@ -1,53 +1,150 @@
 ---
-title: "R Notebook"
+title: "DATA608 - Module 1 R Notebook, Author - Peter Gatica"
 output:
-  html_document: default
+  pdf_document: default
   html_notebook: default
+  html_document: default
 ---
+```{r - Chunk 1}
+library(tidyverse)
+library(tidytext)
+library(ggplot2)
+library(gcookbook)
+library(dplyr)
+library(knitr)
+```
+
 
 **Principles of Data Visualization and Introduction to ggplot2**
 
 I have provided you with data about the 5,000 fastest growing companies in the US, as compiled by Inc. magazine. lets read this in:
 
-```{r}
+```{r - Chunk 2}
 inc <- read.csv("https://raw.githubusercontent.com/charleyferrari/CUNY_DATA_608/master/module1/Data/inc5000_data.csv", header= TRUE)
 ```
 
 And lets preview this data:
 
-```{r}
+```{r - Chunk 3}
 head(inc)
 ```
-```{r}
+```{r - Chunk 4}
 summary(inc)
 ```
 
 Think a bit on what these summaries mean. Use the space below to add some more relevant non-visual exploratory information you think helps you understand this data:
 
-```{r}
-# Insert your code here, create more chunks as necessary
-```
+### Taking a look at the summary of the data and I immediately notice the maximum number of employees of a company and the minmum number.  This is a very large gap between the maximum and the minimum and I cannot help but wonder what affect that may have on the average number of employees per company.
 
 ## Question 1
 
 Create a graph that shows the distribution of companies in the dataset by State (ie how many are in each state). There are a lot of States, so consider which axis you should use. This visualization is ultimately going to be consumed on a 'portrait' oriented screen (ie taller than wide), which should further guide your layout choices.
 
-```{r}
-# Answer Question 1 here
+```{r - Chunk 5}
+# Count the number of companies by state
+inc_agg_by_state <- aggregate(inc$Name, by=list(inc$State), FUN=length)
+# rename columns
+names(inc_agg_by_state) <- c("State", "Count")
+# inc_agg_by_state
+```
+
+```{r - Chunk 6}
+head(inc_agg_by_state[with(inc_agg_by_state, order(-Count)),],5) # List in order by the total number of companies in each state
+```
+
+```{r - Chunk 7}
+inc_agg_by_state %>% 
+    ggplot(aes(fct_reorder(`State`,`Count`), `Count`))+
+      geom_bar(stat="identity", fill="#f68060", alpha=.6, width=.4) +
+      coord_flip() +
+      xlab("") +
+      ylab("State")+
+      ggtitle("Number of Companies by State")
 ```
 
 ## Quesiton 2
 
 Lets dig in on the state with the 3rd most companies in the data set. Imagine you work for the state and are interested in how many people are employed by companies in different industries. Create a plot that shows the average and/or median employment by industry for companies in this state (only use cases with full data, use R's `complete.cases()` function.) In addition to this, your graph should show how variable the ranges are, and you should deal with outliers.
 
-```{r}
+```{r - Chunk 8}
 # Answer Question 2 here
+# Get the cases with full data in the state with the 3rd most companies
+inc_comp_cases_ny <- inc[complete.cases(inc), ] %>%
+  filter(State == 'NY')
+
+# Get the average/mean of employment by Industry
+inc_ny <- aggregate(Employees ~ Industry, data=inc_comp_cases_ny, FUN=mean)
+names(inc_ny) <- c("Industry", "AvgNumEmps")
+
+# Create a scatter plot to show the average and/or median employment by industry for companies in this state
+ggplot(inc_ny, aes(x = AvgNumEmps, y = Industry)) +
+  xlab("Average Number of Employees") +
+  geom_point()
 ```
+
+### Notice the big difference of the average number of employees by industry for the state of New York.  I might call this an outlier that may have an inpact on the overall average number of employees for the state of New York.  Looking at the actual averages of each industry, one will notice the that the average is almost double between the first and the second highest average.
+
+```{r - Chunk 9}
+head(inc_ny[with(inc_ny, order(-AvgNumEmps)),],5) # List in order by the total number of companies in the state
+```
+
+### Also notice that the number of employees for the largest company is over 3 times the number of the next larger company in the New York.  This will definitely affect the average number of employees which can in turn can skew other averages.  I will exclude the Sutherland Global Services company to see what kind of affect it will have and will consider it an outlier.
+
+```{r - Chunk 10}
+head(inc_comp_cases_ny[with(inc_comp_cases_ny, order(-Employees)),c("Rank","Name","Industry","Employees")],5)
+```
+
+```{r - Chunk 11}
+# Filter the Sutherland company
+inc_ny_emp_no_out <- inc_comp_cases_ny %>%
+  filter(Employees < 10001)
+
+# Recalculate the average/mean of employment by Industry
+inc_ny_emp_no_out <- aggregate(Employees ~ Industry, data=inc_ny_emp_no_out, FUN=mean)
+names(inc_ny_emp_no_out) <- c("Industry", "AvgNumEmps")
+inc_ny_emp_no_out[with(inc_ny_emp_no_out, order(-AvgNumEmps)),] # List in order by the total number of companies in the state
+```
+
+```{r - Chunk 12}
+ggplot(inc_ny_emp_no_out, aes(x = AvgNumEmps, y = Industry)) +
+    xlab("Average Number of Employees") +
+  geom_point()
+```
+
+```{r - Chunk 13}
+summary(inc_ny_emp_no_out)
+```
+### As you can see by the scatterplot and the summary that excluding the Sutherland company shows a more accurate measure of the average number of employees by company across all industires for the state of New York at 149.24 number of employees.  I believe that considering Sutherland company as an outlier is the right thing to do.
 
 ## Question 3
 
 Now imagine you work for an investor and want to see which industries generate the most revenue per employee. Create a chart that makes this information clear. Once again, the distribution per industry should be shown.
 
-```{r}
+```{r - Chunk 14}
 # Answer Question 3 here
+# Get the average/mean of employment by Industry
+inc_rev_emps <- aggregate(cbind(Revenue, Employees) ~ Industry, data=inc, FUN=sum)
+
+inc_rev_by_emp <- group_by(inc_rev_emps, Industry, Revenue / Employees)
+
+# rename columns
+names(inc_rev_by_emp) <- c("Industry", "Revenue", "Employees" , "RevenuePerEmployee")
+inc_rev_by_emp
 ```
+
+```{r - Chunk 15}
+ggplot(inc_rev_by_emp, aes(x = RevenuePerEmployee, y = Industry)) +
+  geom_point()
+```
+
+```{r - Chunk 16}
+inc_rev_by_emp %>% 
+    ggplot(aes(fct_reorder(`Industry`,`RevenuePerEmployee`), `RevenuePerEmployee`))+
+      geom_bar(stat="identity", fill="#f68060", alpha=.6, width=.4) +
+      coord_flip() +
+      xlab("") +
+      ylab("Industry")+
+      ggtitle("Average Employee Revenue by Industry")
+```
+
+### In conclusion, as an investor I would most likely invest my money in the Computer Hardware industry if I was making that decision based on the average revenue generated per employee.
