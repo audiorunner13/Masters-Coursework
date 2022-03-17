@@ -1,0 +1,113 @@
+---
+title: "DATA608 - Module 1 R Notebook, Author - Peter Gatica"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document: default
+---
+```{r - Chunk 1}
+library(shiny)
+library(tidyverse)
+library(tidytext)
+library(ggplot2)
+library(gcookbook)
+library(dplyr)
+library(knitr)
+library(RCurl)
+```
+
+
+**Principles of Data Visualization and Introduction to ggplot2**
+
+I have provided you with data about the 5,000 fastest growing companies in the US, as compiled by Inc. magazine. lets read this in:
+
+```{r - Chunk 2}
+filename <- getURL("https://raw.githubusercontent.com/charleyferrari/CUNY_DATA608/master/lecture3/data/cleaned-cdc-mortality-1999-2010-2.csv")
+
+mort_stat <- read.csv(text=filename, header=TRUE)
+# mort_stat <- read.csv("/Users/Audiorunner13/GitHub/ClassRepo/CUNY_DATA_608/module3/data/cleaned-cdc-mortality-1999-2010-2.csv", header=TRUE)
+```
+
+And lets preview this data:
+
+```{r - Chunk 3}
+head(mort_stat)
+```
+```{r - Chunk 4}
+summary(mort_stat)
+```
+```{r}
+# Answer Question 2 here
+# Get the cases with full data in the state with the 3rd most companies
+mort_stat_2010 <- mort_stat %>%
+  filter(Year == '2010')
+```
+
+```{r}
+# basic example
+shinyApp(
+  ui = fluidPage(
+    sidebarPanel(
+      selectInput("icd.Chapter", "Cause of Death", mort_stat_2010[[1]])
+    ),
+    tableOutput("data")
+  ),
+
+  server = function(input, output) {
+
+    output$data <- renderTable({
+      ( df_out <- ((mort_stat_2010[, c("State", "Crude.Rate"), drop = FALSE])[order(-mort_stat_2010$Crude.Rate),]  %>% filter(mort_stat_2010 == input$icd.Chapter)) )
+    }, rownames = TRUE)
+     
+  }
+)
+```
+
+```{r}
+
+# Calculate the national population in 2010
+
+mort_stat_natl <- mort_stat %>%
+  filter(Year == '2010' & ICD.Chapter == 'Neoplasms')
+
+natl_pop_2010 <- sum(mort_stat_natl$Population)  # 308745538
+
+# Sum the Total Deaths for each cause of death
+natl_death_total_cod <- aggregate(mort_stat_2010$Deaths, by=list(mort_stat_2010$ICD.Chapter), FUN=sum)
+
+# rename columns
+names(natl_death_total_cod) <- c("ICD.Chapter", "Total_Deaths")
+
+# Add total deaths nationally by cause of death
+
+mort_stat_2010_new <- mort_stat_2010 %>% 
+             right_join(natl_death_total_cod, by = "ICD.Chapter")
+
+(mort_stat_2010_new <- transform(mort_stat_2010_new, Natlional.Mortality.Rate = (Total_Deaths / natl_pop_2010)*100000))
+
+```
+
+```{r}
+# basic example
+shinyApp(
+  ui = fluidPage(
+    sidebarPanel(
+      selectInput("icd.Chapter", "Cause of Death", mort_stat_2010_new[[1]])
+    ),
+    tableOutput("data")
+  ),
+
+  server = function(input, output) {
+
+    output$data <- renderTable({
+      ( df_out <- ((mort_stat_2010_new[, c("State", "Crude.Rate", "Natlional.Mortality.Rate"), drop = FALSE])[order(-mort_stat_2010_new$Crude.Rate),] %>% filter(mort_stat_2010_new == input$icd.Chapter) ) )
+    }, rownames = TRUE)
+     
+  }
+)
+```
+
+
+
+
+
