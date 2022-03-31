@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar 30 19:18:18 2022
+Created on Thur Mar 17 17:18:18 2022
 
-@author: Audiorunner13
+@author: Peter Gatica
+@Course: Data608 - Knowledge and Visual Analytics
+@Assignment: Module 4 - NYC Tree Census
 """
 
 from dash import Dash, html, dcc
