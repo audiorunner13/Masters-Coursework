@@ -1,0 +1,244 @@
+---
+title: "DATA608-Knowledge and Visual Analytics Final Project"
+author: "Peter Gatica"
+date: "5/18/2022"
+output:
+  html_document:
+    theme: flatly
+runtime: shiny
+---
+# The Danger of Sitting in Foul Ball Territory
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE)
+```
+
+# Introduction
+
+  In the last few years there has been an increase in injuries at major league baseball games due to foul balls hitting spectators and causing serious injuries including death.  Many children and senior adults who cannot protect themselves have suffered near fatal injuries. This is not surprising with pitchers throwing faster, hitters getting stronger and baseballs being wound tighter that in earlier years.  The safety net that had previously been erected behind home plate has been extended to the dugouts at most stadiums.  Signs warning about the dangers of high velocity foul balls have been placed in certain sections.  Is that enough to protect fans?  Should the safety nets be extend all the way to the foul poles?  Can the MLB do more to protect fans?
+
+  The dangers of sitting in areas susceptible to hard hit foul balls is explored in this assignment.  The foul ball numbers have been collected from the heaviest foul ball days at the ten highest average hit fall ball locations in the MLB in the 2019 season prior to June 5th of that year.
+  
+https://fivethirtyeight.com/features/we-watched-906-foul-balls-to-find-out-where-the-most-dangerous-ones-land/
+
+```{r message=FALSE}
+# Load needed libraries
+library(shiny)
+library(tidyverse)
+library(tidytext)
+library(ggplot2)
+library(gcookbook)
+library(dplyr)
+library(knitr)
+library(RCurl)
+library(gridExtra)
+library(reshape2)
+```
+
+```{r Source file from 538 website}
+# Source the file from the 538 Website github repository and set NA strings to 0
+filename <- getURL("https://raw.githubusercontent.com/fivethirtyeight/data/master/foul-balls/foul-balls.csv")
+foul_ball_danger <- read.csv(text = filename,na.strings = "")
+foul_ball_danger[is.na(foul_ball_danger)] <- 0
+# head(foul_ball_danger,10)
+```
+
+```{r Rename columns and matchup value to Team Home (Stadium)}
+# Rename the columns and change the matchup values to reflect the Team home (Stadium)
+names(foul_ball_danger) <- c("Stadium","Date","FoulType","ExitVelocity","PredictedZone","CameraZone","FoulZone")
+foul_ball_danger$Stadium[foul_ball_danger$Stadium == "Seattle Mariners VS Minnesota Twins"] <- "Mariners"
+foul_ball_danger$Stadium[foul_ball_danger$Stadium == "Baltimore Orioles VS Minnesota Twins"] <- "Orioles"
+foul_ball_danger$Stadium[foul_ball_danger$Stadium == "Pittsburgh Pirates VS Milwaukee Brewers"] <- "Pirates"
+foul_ball_danger$Stadium[foul_ball_danger$Stadium == "Oakland A's vs Houston Astros"] <- "A's"
+foul_ball_danger$Stadium[foul_ball_danger$Stadium == "Texas Rangers vs Toronto Blue Jays"] <- "Rangers"
+foul_ball_danger$Stadium[foul_ball_danger$Stadium == "Los Angeles Dodgers vs Arizona Diamondsbacks"] <- "Dodgers"
+foul_ball_danger$Stadium[foul_ball_danger$Stadium == "Milwaukee Brewers vs New York Mets"] <- "Brewers"
+foul_ball_danger$Stadium[foul_ball_danger$Stadium == "Philadelphia Phillies vs Miami Marlins"] <- "Phillies"
+foul_ball_danger$Stadium[foul_ball_danger$Stadium == "Atlanta Braves vs New York Mets"] <- "Braves"
+foul_ball_danger$Stadium[foul_ball_danger$Stadium == "New York Yankees vs Baltimore Orioles"] <- "Yankees"
+head(foul_ball_danger,10)
+```
+
+# The number of foul balls per stadium on its heaviest foul ball day of the 2019 season up until June 5, 2019.
+```{r}
+ggplot(data = foul_ball_danger) +
+  geom_bar(mapping = aes(x = Stadium, fill = Stadium)) +
+  labs(title = "Number of Foul Balls by Top Ten Foul Location", 
+       x = "Team Stadium", y = "Number of Foul Balls" )
+```
+
+I have watched and attended many MLB games in my life but looking closely at the number of foul balls in one game at these ten stadiums, I am surprised at the number of foul balls that can be hit in one game.  I am even more surprised that more fans are not injured.  One hundred and twenty foul balls at Camden Yards (Orioles) and over one hundred and five at Oakland Coliseum (A's) and PNC Park (Pirates).
+
+# The number of foul balls per foul type.
+```{r}
+ggplot(data = foul_ball_danger) +
+  geom_bar(mapping = aes(x = FoulType, fill = FoulType)) +
+  labs(title = "Number of Foul Balls by Foul Type", x = "Foul Type", y = "Number of Foul Balls" )
+```
+
+# The number of foul balls per foul type per Stadium.
+
+```{r}
+ui_1 <- fluidPage(
+  # titlePanel(title = h4("Foul Balls By Stadium", align="center")),
+  
+  # imageOutput("image1"),
+  
+  sidebarPanel(
+    
+    radioButtons("Stadium", "Foul Balls By MLB Stadium",
+                 choices = c("Yankees", "Mariners","Orioles","Pirates","A's","Rangers","Dodgers","Brewers","Phillies","Braves"),
+                 selected = "Yankees")),
+  
+  mainPanel(
+    plotOutput("bar",height = 350))
+)
+```
+```{r}
+server_1 <- function(input,output){
+ 
+  output$bar <- renderPlot({
+
+        our_data <- ( df_out <- foul_ball_danger[foul_ball_danger$Stadium == input$Stadium ,names(foul_ball_danger) <- c("Stadium","FoulType","ExitVelocity","FoulZone")]) #, rownames = TRUE
+
+  p1 <- ggplot(data = our_data[,c("FoulType","FoulZone")]) +
+    geom_bar(mapping = aes(x = FoulType, fill = FoulType)) +
+    labs(title = "Number of Foul Balls by Foul Type", x = "Foul Type", y = "Number of Foul Balls" )
+
+  grid.arrange(p1)
+  })
+}
+
+shinyApp(ui=ui_1, server=server_1)
+
+br()
+```
+
+# Foul Ball Zones Chart 
+The image below shows foul ball zones supported by the data and the black arc shows current foul ball safety barrier erected by all MLB stadiums.  All zones and barrier in the image are approximations.
+
+```{r}
+# fb_zones_img <- "https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA607%20Spring%202021/Week1/Assignment/images/fb_zones.jpg"
+fb_zones_img <- "/Users/Audiorunner13/CUNY MSDS Course Work/DATA608 Spring 2022/Final Project/WWW/fb_zones.png"
+include_graphics(fb_zones_img)
+```
+
+# The number of foul balls per zone.
+
+The scatterplots below show the number of foul balls hit into each zone by foul type.  A few things to note.
+
+1. Batter hits self, ground and line drive foul balls mostly likely do not make it into Zone 1 and most of 
+   Zones2 and 3 seats because they are stopped by the safety net.
+2. Fly balls are the most hit in all stadiums and are mostly hit towards Zones 4 and 5 areas.  Although this is
+   a lot most are probably hit into the upper level sections or outside the park.
+3. Lined and ground foul balls that are hit into exposed parts of Zones 2 and 3 and exposed Zones 4 and 5. These 
+   foul balls probably make it into those seats and do travel at a high rate of speed.
+
+```{r}
+ggplot(data = foul_ball_danger) +
+  geom_bar(mapping = aes(x = FoulZone)) +
+  facet_wrap(~ FoulType) +
+  labs(title = "Number of Foul Balls by Zone by Foul Type", x = "Foul Zone", y = "Number of Foul Balls" )
+```
+
+# The number of foul balls per zone per Stadium.
+
+```{r}
+server_2 <- function(input,output){
+
+  output$bar <- renderPlot({
+
+        our_data <- ( df_out <- foul_ball_danger[foul_ball_danger$Stadium == input$Stadium ,names(foul_ball_danger) <- c("Stadium","FoulType","ExitVelocity","FoulZone")]) #, rownames = TRUE
+
+  p2 <- ggplot(data = our_data[,c("FoulZone","FoulType")]) +
+    geom_bar(mapping = aes(x = FoulZone, fill = FoulZone)) +
+    labs(title = "Number of Foul Balls by Foul Zone", x = "Foul Zone", y = "Number of Foul Balls" )
+
+  grid.arrange(p2)
+  })
+}
+
+shinyApp(ui=ui_1, server=server_2)
+
+br()
+```
+
+# Calculate the mean exit velocity of foul balls.
+```{r calculate the mean exit velocity}
+avg_ev <- round(mean(foul_ball_danger$ExitVelocity),2)
+sprintf("The mean exit velocity of the 906 foul balls is: %s mph", avg_ev)
+```
+
+Since the exit velocity of some foul balls was not captured the average exit velocity of the entire dataset is 
+a low 48.91 mph.  In order to get a more accurate average exit velocity, the records with no exit velocity should 
+be filtered.
+
+```{r Subset dataset to only use data with exit velocity > 0}
+# Subset dataset to only use data with exit velocities > 0. Not all foul balls' exit velocity were recorded.
+foul_ball_danger_v2 <- foul_ball_danger[foul_ball_danger$ExitVelocity > 0.0,names(foul_ball_danger) <- c("Stadium","Date","FoulType","ExitVelocity","FoulZone")]
+# head(foul_ball_danger_v2,10)
+```
+
+After 326 foul balls with an exit velocity of zero have been filtered, a more accurate average exit velocity can be calculated.
+
+```{r recalculate the mean exit velocity}
+avg_ev <- round(mean(foul_ball_danger_v2$ExitVelocity),2)
+sprintf("The mean exit velocity of the 580 foul balls is: %s mph", avg_ev)
+```
+
+# The exit velocity of foul balls hit into each zone.
+```{r scatterplot with facet wrap}
+# Display the exit velocity by the foul zone by the type of foul ball
+ggplot(data = foul_ball_danger_v2) +
+  geom_point(mapping = aes(x = ExitVelocity, y = FoulZone)) +
+  facet_wrap(~ FoulType, nrow = 2) +
+  labs(title = "Foul Ball Exit Velocity by Zone by Foul Ball Type", x = "Exit Velocity (mph)", y = "Foul Zone" )
+```
+
+# The exit velocity of foul balls hit into each zone by stadium.
+
+```{r}
+server_3 <- function(input,output){
+
+  output$bar <- renderPlot({
+  
+    our_data <- ( df_out <- foul_ball_danger_v2[foul_ball_danger_v2$Stadium == input$Stadium ,names(foul_ball_danger_v2) <- c("Stadium","FoulType","ExitVelocity","FoulZone")]) #, rownames = TRUE
+
+  p3 <- ggplot(data = our_data) +
+    geom_point(mapping = aes(x = ExitVelocity, y = FoulZone)) +
+    facet_wrap(~ FoulType, nrow = 2) +
+    labs(title = "Foul Ball Exit Velocity by Zone by Foul Ball Type", x = "Exit Velocity (mph)", y = "Foul Zone" )
+
+  grid.arrange(p3)
+  })
+}
+
+shinyApp(ui=ui_1, server=server_3)
+
+br()
+```
+
+```{r }
+# Subset dataset to only use data with foul types ground, line, fly and hit into zones 4 through 7.
+foul_ball_danger_grln45 <- subset(foul_ball_danger_v2,(FoulType == "Ground" | FoulType == "Line" | FoulType == "Fly") 
+                                  & (FoulZone == 4 | FoulZone == 5 | FoulZone == 6 | FoulZone == 7))
+# head(foul_ball_danger_grln45,10)
+```
+
+```{r }
+# Calculate the mean exit velocity for ground, line and fly foul balls into zones 4 through 7.
+avg_exv_z47 <- round(mean(foul_ball_danger_grln45$ExitVelocity),2)
+sprintf("The mean exit velocity of ground, line and fly foul balls to Zones 4 through 7 is: %s", avg_exv_z47, "mph")
+```
+
+# Conclusion
+
+I have often been asked why I enjoy attending baseball games.  My answer has always been for love of the game.  I also enjoy the games because it's a game where one can socialize while watching.  It is apparent that although that may be true one must be attentive to the game especially if you happen to be sitting in sections where many foul balls are hit with young and senior fans.  The data shows that most foul balls are hit into Zones 4 and 5 with an average exit velocity of 80 mph.  It is my belief and recommendation that the MLB can further protect fans by doing the following.
+
+1.  Extend the protective netting beyond zones 2 and 3 all the way down the foul line on both sides of the field to the foul pole.
+2.  If the protective netting is not extended beyond Zones 2 and 3 then age restrictions should be in place to prevent younger and senior fans, who may be unable to protect themselves, from sitting the lower seating areas where high velocity foul balls are more likely to be hit.
+
+
+#### ************************************
+
