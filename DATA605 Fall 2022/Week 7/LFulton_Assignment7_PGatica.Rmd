@@ -1,0 +1,110 @@
+---
+title: "Homework Week 7"
+author: "Peter Gatica"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# library(gtools)
+library(matlib)
+```
+
+1. Let X1, X2, . . . , Xn be n mutually independent random variables, each of which is uniformly       distributed on the integers from 1 to k. Let Y denote the minimum of the Xi’s. Find the             distribution of Y .
+
+$$ For\  1\leq j\leq k,m(j)=\frac{(k-j+1)^{n}-(k-j)^{n}}{k^{n}} $$
+
+2. Your organization owns a copier (future lawyers, etc.) or MRI (future doctors). This machine
+   has a manufacturer’s expected lifetime of 10 years. This means that we expect one failure every    ten years. (Include the probability statements and R Code for each part.).
+
+a. What is the probability that the machine will fail after 8 years?. Provide also the
+   expected value and standard deviation. Model as a geometric. (Hint: the probability is
+   equivalent to not failing during the first 8 years..)
+   
+   $$ Probability\ Formula:  P(X=x)=(1-p)^{n-1}\ast p $$
+
+```{r}
+p=1/10
+x=8
+n=9
+(prob_8y = (1-p)^(n-1) * p)
+(dgeom(x,p))
+```
+
+$$ Expected\  Value\  Formula:\  E(X)=\frac{1}{p}\ or\ p^{-1} $$
+```{r}
+p=1/10
+(EV=1/p)
+(EV=p^-1)
+```
+$$
+Standard\ Deviation\ Formula: sd=\sqrt{\frac{1-p}{p^{2}} } 
+$$
+```{r}
+(sd = sqrt((1-p)/p^2))
+```
+b. What is the probability that the machine will fail after 8 years?. Provide also the
+expected value and standard deviation. Model as an exponential.
+
+$$ Probability\  as\  Exponential:P(X>=8)=e^{\frac{-k}{\mu } } $$
+```{r}
+k=8
+lambda=1/10
+mu=1/lambda
+(prob_8y=exp((-k/(mu))))
+```
+$$ Expected\  Value:E[X]=u=\frac{1}{\lambda } =10,where\ lambda =\frac{1}{10} $$
+```{r}
+(EV=mu)
+```
+
+$$ Standard\  Deviation:sd=\sqrt{\frac{1}{{}^{\lambda^{2} }} }  $$
+```{r}
+(sd=sqrt(1/lambda^2))
+```
+c. What is the probability that the machine will fail after 8 years?. Provide also the
+expected value and standard deviation. Model as a binomial. (Hint: 0 success in 8
+years)
+
+$$ Probability:P(X>8)=1-p^{x}(1-p)^{n-x} $$
+```{r}
+(n=10)
+(x=8)
+(choose(n,x)*p^x*((1-p)^(n-x)))
+```
+$$ Expected\  Value:E[X]=np $$
+```{r}
+(n*p)
+```
+$$
+Standard\ Deviation\ Formula: \sigma =\sqrt{npq} \  where\  q=1-p
+$$
+```{r}
+q=1-p
+(sd = sqrt(n*p*q))
+```
+
+d. What is the probability that the machine will fail after 8 years?. Provide also the
+expected value and standard deviation. Model as a Poisson.
+$$ P(X=8)=\frac{{}\lambda^{x} e^{-\lambda }}{x!} \  Where\  \lambda =\frac{np}{t} $$
+```{r}
+t=1
+x=8
+(lambda=(n*p)/t)
+(p_pois=((lambda^x)*(exp(-lambda)))/factorial(x))
+```
+$$ E[X]=\lambda $$
+```{r}
+(lambda)
+```
+$$ sd=\sqrt{\lambda } $$
+```{r}
+(sd=sqrt(lambda))
+```
+
+
+

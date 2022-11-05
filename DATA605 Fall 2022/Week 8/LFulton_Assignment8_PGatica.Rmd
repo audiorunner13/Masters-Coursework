@@ -1,0 +1,102 @@
+---
+title: "DATA 605 Assignment 8"
+author: "Peter Gatica"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(matlib)
+```
+
+Exercise 11. A company buys 100 lightbulbs, each of which has an exponential lifetime of 1000 hours. What is the expected time for the first of these bulbs to burn out? (See Exercise 10.)
+
+$$ First,\ let\  X_{i}-X_{n}\  be\  independent\  exponetially\  distributed\  random\ variables with a rate parameter\ \lambda_{i} \ldots \lambda_{n} . $$
+$$ Second,\  let\  min({Xi\ldots ,Xn}  )\  be\  exponentially\  distributed\  with\  parameter $$
+$$ \lambda =\lambda_{i} +...+\lambda_{n} $$
+$$ Pr(k|X_{k}=minX_{i}...,X_{n})=\frac{\lambda_{k} }{\lambda_{i} +...+\lambda_{n} } $$
+λ is the rate with which bulbs with an exponential lifetime burn out so we can say that:
+$$ \lambda_{i} =\frac{1}{1000} ,\sum \lambda_{i} =\frac{1}{10}  $$
+
+```{r}
+bulbs=100
+lambdaBulb=1/1000
+sumLambda=(bulbs*lambdaBulb)
+(minE = 1/sumLambda)
+```
+#### The minimum expected time of the first bulbs is 10 hours.
+
+Exercise 14. Assume that X1 and X2 are independent random variables, each having an exponential density with parameter λ. Show that Z = X1 − X2 has a density of
+
+$$ fZ(z)=(\frac{1}{2} )\lambda^{-\lambda \left| z\right|  }_{e} $$
+For W = X + Y
+
+$$ f_{w}(w)=\int^{\infty }_{\infty } f_{x}(x)f_{y}(w-x)dx $$
+Therefore, for Z = X1 - X2, let Z = X + (-Y), so
+$$ f_{z}(z)=\int^{\infty }_{\infty } f_{x}(x)f_{-y}(z-x)dx $$
+we can mow say that
+$$ f_{y}(z-x)=f_{y}(x-z) $$
+thus 
+$$ f_{z}(z)=\int^{\infty }_{\infty } f_{x}(x)f_{y}(x-z)dx $$
+$$ f_{z}(z)=\int^{\infty }_{0} \lambda^{-\lambda_{{}_{x}} }_{e} \lambda^{-\lambda \left( x-z\right)  }_{e} dx $$
+$$ =\lambda_{e} \lambda_{z} \int^{\infty }_{0} \lambda^{-2\lambda x}_{e} dx $$
+$$ =\lambda^{\lambda z}_{e} \left( -\frac{1}{2} e^{-2\lambda z}|\infty ->0\right) $$
+this evaluates to the density of 
+$$ fZ(z)=(\frac{1}{2} )\lambda^{-\lambda \left| z\right|  }_{e} $$
+Exercise 1. Let X be a continuous random variable with mean μ = 10 and variance = 100/3. Using Chebyshev’s Inequality, find an upper bound for the following probabilities.
+
+Chebyshev’s Inequality states the following:
+$$ Suppose\  that\  \mu =E(X)\  and\  \sigma^{2} =V(X),\  then\  for\  any\  positive\  number\  \varepsilon >0\  we\  have $$ 
+$$ P(\left| X-\mu \right|  >=k\sigma \leq \frac{\sigma^{2} }{k^{2}\sigma^{2} } =\frac{1}{k^{2}} $$
+a. P(|X-10|>=2)
+$$ P(|X-10|>=2\leq \frac{1}{2^{2}} $$
+```{r}
+mu = 10
+vari = 100/3
+
+sd = sqrt(vari)
+
+ksd = 2
+
+k = ksd/sqrt(vari)
+
+upper_bnd = 1/(k^2)
+pmin(upper_bnd, 1)
+```
+b. P(|X−10|>=5)
+$$ P(|X-10|>=5\leq \frac{1}{5^{2}} $$
+```{r}
+ksd = 5
+
+k = ksd/sqrt(vari)
+
+upper_bnd = 1/(k^2)
+pmin(upper_bnd, 1)
+```
+c. P(|X−10|>=9)
+$$ P(|X-10|>=9\leq \frac{1}{9^{2}} $$
+
+```{r}
+ksd = 9
+
+k = ksd/sqrt(vari)
+
+upper_bnd = 1/(k^2)
+pmin(upper_bnd, 1)
+```
+d. P(|X−10|>=20) 
+$$ P(|X-10|>=20\leq \frac{1}{20^{2}} $$
+
+```{r}
+ksd = 20
+
+k = ksd/sqrt(vari)
+
+upper_bnd = 1/(k^2)
+pmin(upper_bnd, 1)
+```
+
