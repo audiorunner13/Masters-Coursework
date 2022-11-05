@@ -1,0 +1,201 @@
+---
+title: "DATA 605 - Homework 6"
+author: "Peter Gatica"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(gtools)
+```
+
+### Problem 1
+
+#### A bag contains 5 green and 7 red jellybeans. How many ways can 5 jellybeans be withdrawn from the bag so that the number of green ones withdrawn will be less than 2?
+
+$$ Step\ 1:\ \binom{5}{1} =\frac{5!}{(5-1)!1!} =\frac{120}{24} =5\  ways\  to\  get\  1\  green\  jellybean $$
+
+```{r}
+choose(5,1)
+```
+
+$$ Step\ 2:\ \binom{7}{4} =\frac{7!}{(7-4)!4!} =\frac{5,040}{144} =35\  ways\  to\  get\  4\  red\  jellybeans $$
+```{r}
+choose(7,4)
+```
+
+$$ Step\ 3:\ \binom{7}{5} =\frac{7!}{(7-5)!5!} =\frac{5,040}{240} =21\  ways\  to\  get\  5\  red\  jellybeans $$
+```{r}
+choose(7,5)
+```
+
+$$ Answer:\ Total\  possibilities\  =\  \binom{5}{1} \times \binom{7}{4} +\binom{7}{5} =196\  ways $$
+```{r}
+(choose(5,1) * choose(7,4)) + choose(7,5)
+```
+
+### Problem 2
+
+#### A certain congressional committee consists of 14 senators and 13 representatives. How many ways can a subcommittee of 5 be formed if at least 4 of the members must be representatives?
+
+$$ Step\ 1:\ \binom{13}{4} \times \binom{14}{1} =715\times 14=10,010\  ways\  to\  choose\ with\
+at\ least\ 4\ representatives $$
+```{r}
+choose(13,4)
+choose(14,1)
+choose(13,4) * choose(14,1)
+```
+$$ Step\ 2:\ \binom{13}{5} =6,227,020,800/4,838,400=1287\  ways\  to\  choose\ with\ 5\ representatives $$
+```{r}
+## Possibilites with all 5 representative we have:
+choose(13,5)
+```
+$$ Answer:\ Total\  possibilities\  =\  \binom{13}{4} \times \binom{14}{1} +\binom{13}{5} =11,297\  ways $$
+```{r}
+(choose(13,4) * choose(14,1)) + choose(13,5)
+```
+
+### Problem 3.
+
+####  If a coin is tossed 5 times, and then a standard six-sided die is rolled 2 times, and finally a group of three cards are drawn from a standard deck of 52 cards without replacement, how many different outcomes are possible?
+
+$$ Coin\  tossed\  5\  times,\  Outcomes=2^{5}=32 $$
+```{r}
+2*2*2*2*2 
+```
+$$ 6\  sided\  die\  rolled\  2\  times,\  outcomes=6^{2}=36 $$
+```{r}
+6*6
+```
+$$ Draw\  a\  group\  of\  3\  cards\  from\  a\  deck\  of\  52=\binom{53}{3} =\frac{53!}{(53-3)!3!} =22,100 $$
+```{r}
+choose(52,3)
+```
+$$ Answwer:\ Add\ all\ outcomes\ togther=\ 22,168 $$
+
+```{r}
+2^5 + 6^2 + choose(52,3)
+```
+
+### Problem 4
+
+#### 3 cards are drawn from a standard deck without replacement. What is the probability that at least one of the cards drawn is a 3? Express your answer as a fraction or a decimal number rounded to four decimal places.
+
+$$  Answer:\  P\left( \frac{Hands\  w/\  a\  3}{Total\  hands\  possible} \right)  =\frac{\binom{51}{2} }{\binom{52}{3} } =\frac{1275}{22100} =0.0577 $$
+
+```{r}
+(ways <- choose(52,3))
+(rem_ways <- choose(51,2))
+(format(round(rem_ways/ways, 4)))
+```
+
+### Problem 5
+
+#### Lorenzo is picking out some movies to rent, and he is primarily interested in documentaries and mysteries. He has narrowed down his selections to 17 documentaries and 14 mysteries.
+
+#### Step 1. How many different combinations of 5 movies can he rent?
+$$ Answer:\  \binom{31}{5} =\frac{31!}{(31-5)!5!} =169,911 $$
+
+```{r}
+choose(31,5)
+```
+
+#### Step 2. How many different combinations of 5 movies can he rent if he wants at least one mystery?
+
+$$ Answer:\  \binom{31}{4} =\frac{31!}{(31-4)!4!} =31,465 $$
+
+```{r}
+choose(31,4) 
+```
+
+### Problem 6
+
+#### In choosing what music to play at a charity fund raising event, Cory needs to have an equal number of symphonies from Brahms, Haydn, and Mendelssohn. If he is setting up a schedule of the 9 symphonies to be played, and he has 4 Brahms, 104 Haydn, and 17 Mendelssohn symphonies from which to choose, how many different schedules are possible? Express your answer in scientific notation rounding to the hundredths place
+
+$$ Step\ 1:\  \binom{4}{3} =\frac{4!}{(4-3)!3!} =4\ ways\ for\ 3\ symphonies\ from\ Brahms $$
+
+```{r}
+choose(4,3)
+```
+$$ Step\ 2:\  \binom{104}{3} =\frac{104!}{(104-3)!3!} =182,104\ ways\ for\ 3\ symphonies\ from\ Haydn $$
+```{r}
+choose(104,3)
+```
+$$ Step\ 3:\  \binom{17}{3} =\frac{17!}{(17-3)!3!} =680\ ways\ for\ 3\ symphonies\ from\ Mendelssohn $$
+```{r}
+choose(17,3)
+```
+$$ Anwer:\  \binom{4}{3} \binom{104}{3} \binom{17}{3}=4.9532e+08\ ways\ for\ 3\ symphonies\ from\ Brahms,\ Haydn\ and\ Mendelssohn. $$
+```{r}
+formatC(choose(4,3) * choose(104,3) * choose(17,3),format="e")
+```
+
+### Problem 7
+
+#### An English teacher needs to pick 13 books to put on his reading list for the next school year, and he needs to plan the order in which they should be read. He has narrowed down his choices to 6 novels, 6 plays, 7 poetry books, and 5 nonfiction books
+
+Step 1 If he wants to include no more than 4 nonfiction books, how many different 
+reading schedules are possible? Express your answer in scientific notation rounding to
+the hundredths place.
+
+$$ Answer\ 1: Number\ of\ schedules\ where\ there\ are\ no\ more\ than\ 4\ non-fiction\ books\\=\ 2.5782e+06.$$
+
+```{r}
+# Number of ways one non-fiction book is selected
+one_nf <- choose(23,12)
+
+# Number of ways two non-fiction book is selected
+two_nf <- choose(22,11)
+
+# Number of ways three non-fiction book is selected
+three_nf <- choose(21,10)
+
+# Number of ways three non-fiction book is selected
+four_nf <- choose(20,9)
+
+(formatC(one_nf+two_nf+three_nf+four_nf,format="e"))
+```
+
+Step 2. If he wants to include all 6 plays, how many different reading schedules are possible? Express your answer in scientific notation rounding to the hundredths place.
+
+$$ Answer\  2:\  \binom{18}{7} =\frac{18!}{(18-7)!7!} =3.1824e+04 $$
+
+```{r}
+formatC(choose(18,7),format = "e")
+```
+
+### Problem 8
+
+#### Zane is planting trees along his driveway, and he has 5 sycamores and 5 cypress trees to plant in one row. What is the probability that he randomly plants the trees so that all 5 sycamores are next to each other and all 5 cypress trees are next to each other? Express your answer as a fraction or a decimal number rounded to four decimal places.
+
+#### Total arrangement is 2 syca + cypress or cypress + syca 
+
+$$ Answer:\  Each\  tree\  has\  a\  \frac{1}{10} \  chance\  of\  being\  pick\  next\  to\  plant\  so\  there\  is\  a\  5/10\  chance\\ that\ 5\  sycamores\  will\  be\  planted\  in\  a\  row\  and\  vice\  versa.$$
+
+### Problem 9
+
+#### If you draw a queen or lower from a standard deck of cards, I will pay you $4. If not, you pay me $16. (Aces are considered the highest card in the deck.)
+
+#### Step 1. Find the expected value of the proposition. Round your answer to two decimal places. Losses must be expressed as negative values.
+
+To be rewarded $4 you must not get a king or an ace. Since there are 4 kings and 4 aces you have a probability 8/52 that you will draw a king or an ace. That also means that we have a 44/52 chance that we will not draw an ace or a king
+
+```{r}
+paste0("The expected Value is ",round((4* (44/52)) + (-16 * (8/52)),4))
+```
+#### Step 2: If you played this game 833 times how much would you expect to win or lose? Round your answer to two decimal places. Losses must be expressed as negative.
+```{r}
+odds <- (4* (44/52)) + (-16 * (8/52))
+winnings <- round(833 * odds,2)
+
+paste0("You would have ", winnings)
+```
+
+
+
+
+

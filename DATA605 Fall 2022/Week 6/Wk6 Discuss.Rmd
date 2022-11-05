@@ -1,0 +1,71 @@
+---
+title: "Week 6 Discussion"
+author: "Peter Gatica"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+# library(combinat)
+library(gtools)
+```
+
+Exercise 1. Four people are to be arranged in a row to have their picture taken. In how many ways can this be done?
+
+Permutations Formula:
+$$ P(n,r)=\frac{n!}{(n-r)!} $$
+
+```{r}
+n <- 4 # number of objects
+r <- 4 # Number of objects to choose from
+
+(factorial(n))
+(factorial(n-r))
+(perm_4 <- factorial(n) / factorial(n-r))
+```
+
+
+```{r}
+factorial(4)
+```
+
+
+```{r}
+# generating permutations 
+# of the numbers 3
+print ("Permutations of 4 people")
+permn(4)
+```
+
+Exercise 2. An automobile manufacturer has four colors available for automobile exteriors and three for interiors. How many different color combinations can he produce?
+
+```{r}
+# describing the input vector
+  
+#(vec<- LETTERS[4:7])
+(vec <- c(1,2,3,4))
+  
+# getting permutations on choose 2 
+# letters out of 4 letters without 
+# replacement
+res <- permutations(n=4,r=4,v=vec)
+print ("Permutations without replacement")
+print (res)
+  
+print ("Number of permutations without replacement")
+print (nrow(res))
+  
+# calculating permutations with replacement
+# res1 <- permutations(n=4,r=4,v=vec,repeats.allowed=T)
+# print ("Permutations with replacement")
+# print (res1)
+#   
+# print ("Number of permutations with replacement")
+# print (nrow(res1))
+```
+
