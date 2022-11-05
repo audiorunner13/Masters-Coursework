@@ -1,0 +1,35 @@
+---
+title: "Assignment - Loading Data into a Data Frame"
+author: "Peter Gatica"
+date: "2/7/2021"
+output: html_document
+---
+# The Danger of Sitting in Foul Ball Territory
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+  In the last few years there has been an increase in injuries at major league baseball games due to foul balls hitting spectators and causing serious injuries including death.  Many children and senior adults who cannot protect themselves have suffered near fatal injuries. This is not surprising with pitchers throwing faster, hitters getting stronger and baseballs being wound tighter that in earlier years.  The safety net that had previously been erected behind home plate has been extended to the dugouts at most stadiums.  Signs warning about the dangers of high velocity foul balls have been placed in certain sections.  Is that enough to protect fans?  Should the safety nets be extend all the way to the foul poles?  Can the MLB do more to protect fans?
+
+  The dangers of sitting in areas susceptible to hard hit foul balls is explored in this assignment.  The foul ball numbers have been collected from the heaviest foul ball days at the ten highest average hit fall ball locations in the MLB in the 2019 season prior to June 5th of that year.
+  
+
+```{r message=FALSE}
+# Load needed libraries
+# library(devtools)
+# library(tidyverse)
+# library(magrittr)
+library(pracma)
+# library(animation)
+# library(RCurl)
+# library(plyr)
+# library(knitr)
+```
+
+```{r Source file from 538 website}
+c15_matrix <- matrix(c(2,1,-1,3,2,2,-1,1,3,-9,0,4,-16,0,8),nrow=3,ncol=5)
+
+rref(c15_matrix)
+```

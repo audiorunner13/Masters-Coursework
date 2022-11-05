@@ -1,0 +1,60 @@
+---
+title: "HW Assignment 1 - Initals Animation"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(animation)
+```
+
+```{r Build Initials P G}
+# c() - defines a vector, rep() - may be used to repeat a series of integers or characters
+# seq() - generates a sequence of a prior known pattern.
+x=c(rep(-1,500),seq(-1,-0.5,length.out=1000),seq(-1,-0.5,length.out=1000), rep(-0.5,500), # Build P
+    rep(0,500),seq(0,0.5,length.out=1000),seq(0,0.5,length.out=1000),rep(0.5,500), seq(0.25,0.5,length.out=1000)) # Build G
+y=c(seq(-1,1,length.out=500),rep(1,1000),rep(0,1000),seq(0,1,length.out=500), # Build P
+    seq(-1,1,length.out=500),rep(1,1000), rep(-1,1000),seq(-1,0,length.out=500), rep(0,1000)) # Build G
+
+# combine x and y vectors 
+z=rbind(x,y)
+
+plot(y~x, xlim=c(-3,3), ylim=c(-3,3))
+# x %*% X11()
+
+# Copy Graphics Between Multiple Devices
+dev.control('enable')
+
+# Record and replay animations
+myani=ani.record(reset = TRUE, replay.cur = FALSE)
+
+# Construct a diagonal matrix which is a 2x2 identity matrix
+a=diag(x=2)
+
+# print(a)
+
+# starting the X Window System graphics device driver using the x11() function
+x11()
+
+for (i in seq(3,-3,length.out=100)){
+#  print(i)
+  
+  a[1,1]=i
+#  print(a[1,1])
+
+  # Apply the anonymous function(x) equation a%*%x
+  new_matrix=apply(z, 2, function(x) a%*% x)
+
+  #  print(new_matrix)
+  # plot(new_matrix[2,]~new_matrix[1,], xlim=c(-3,3), ylim=c(-3,3))
+  plot(new_matrix[2,]~new_matrix[1,], xlim=c(-3,3), ylim=c(-3,3))
+  ani.record()
+#  Sys.sleep(1)
+}
+```
+
+
+
+
+
