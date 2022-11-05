@@ -1,0 +1,70 @@
+---
+title: "Discussion Week 10"
+author: "Peter Gatica"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r }
+library(expm)
+library(markovchain)
+library(diagram)
+library(pracma)
+```
+
+```{r}
+em <- c(0,1,rep(0,3),.25,0,.75,rep(0,3),.5,0,.5,rep(0,3),.75,0,.25,rep(0,3),1,0)
+P_em <- matrix(em,5,5,byrow=TRUE)
+```
+
+```{r}
+(Pem <-new('markovchain', transitionMatrix = P_em, states = c('0','1','2','3','4'),name = 'Ehrenfest Model'))
+```
+```{r}
+em <- c(1,rep(0,4),.25,0,.75,rep(0,3),.5,0,.5,rep(0,3),.75,0,.25,rep(0,4),1)
+P_em <- matrix(em,5,5,byrow=TRUE)
+```
+
+```{r}
+(Pem <-new('markovchain', transitionMatrix = P_em, states = c('0','1','2','3','4'),name = 'Ehrenfest Model Absorbing'))
+```
+```{r}
+# Determine transient states
+(transientStates(Pem))
+```
+```{r}
+# determine absorbing states
+(absorbingStates(Pem))
+```
+
+```{r}
+em <- c(0,.75,0,.25,0,.5,0,.5,rep(0,3),.75,0,0,.25,rep(0,3),1,0,rep(0,4),1)
+P_em <- matrix(em,5,5,byrow=TRUE)
+
+(Pem <-new('markovchain', transitionMatrix = P_em, states = c("1","2","3","0","4"),name = 'Ehrenfest Model Canonical Form'))
+```
+
+```{r}
+(Q <- Pem[1:3,1:3])
+```
+```{r}
+(I <- diag(dim(Q)[2]))
+```
+```{r}
+(I-Q)
+```
+
+```{r}
+(N <- solve(I-Q))
+```
+
+```{r}
+(R <- Pem[1:3,4:5])
+```
+```{r}
+(B <- N %*% R)
+```

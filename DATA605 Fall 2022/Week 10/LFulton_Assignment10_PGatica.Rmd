@@ -1,0 +1,105 @@
+---
+title: "Assignment Week 10"
+author: "Peter Gatica"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(expm)
+library(markovchain)
+library(diagram)
+library(pracma)
+```
+
+Smith is in jail and has 1 dollar; he can get out on bail if he has 8 dollars.
+A guard agrees to make a series of bets with him. If Smith bets A dollars,
+he wins A dollars with probability .4 and loses A dollars with probability .6.
+Find the probability that he wins 8 dollars before losing all of his money if
+
+(a) he bets 1 dollar each time (timid strategy)
+```{r}
+p <- c(.6,0,.4)
+bb <- c(1,rep(0,8),p,rep(0,7),p,rep(0,7),p,rep(0,7),p,rep(0,7),p,rep(0,7),p,rep(0,7),p,rep(0,8),1)
+P_bb <- matrix(bb,9,9,byrow=TRUE)
+```
+##### Build the Markov Chain matrix
+```{r}
+(Pbb <-new('markovchain', transitionMatrix = P_bb, states = c('0','1','2','3','4','5','6','7','8'),name = 'Bet for Bail'))
+```
+##### Identify transient states
+```{r}
+# Determine transient states
+(transientStates(Pbb))
+```
+##### Identify absorbing states
+```{r}
+# determine absorbing states
+(absorbingStates(Pbb))
+```
+##### Create the Markov Chain in Conanical form
+```{r}
+p <- c(.6,0,.4)
+bb <- c(0,.4,rep(0,5),.6,0,p,rep(0,7),p,rep(0,7),p,rep(0,7),p,rep(0,7),p,rep(0,7),.6,0,0,.4,rep(0,7),1,rep(0,9),1)
+P_bb <- matrix(bb,9,9,byrow=TRUE)
+
+(Pbb <-new('markovchain', transitionMatrix = P_bb, states = c('1','2','3','4','5','6','7','0','8'),name = 'Betting on Bail Canonical Form'))
+```
+##### Contruct your Q matrix
+```{r}
+(Q <- Pbb[1:7,1:7])
+```
+##### Construct the Identity matrix
+```{r}
+(I <- diag(dim(Q)[2]))
+```
+##### Calculate the Inverse martix
+```{r}
+(I-Q)
+```
+##### Claculate the fundamental matrix
+```{r}
+(N <- solve(I-Q))
+```
+##### Calcualte the number of steps before the chain is absorbed.
+```{r}
+c_calc <- c(rep(1,7))
+c <- matrix(c_calc,7,1,byrow=TRUE)
+(t <- N %*% c)
+```
+##### Construct the R matrix (non-zero t by r matrix)
+```{r}
+(R <- Pbb[1:7,8:9])
+```
+##### Calculate the probabilities that an absorbing chain will be absorbed
+##### The probability that Smith wins 8 dollars before losing all of his money if he bets 1 dollar each time (timid strategy) is 0.0203.
+```{r}
+(round(B <- N %*% R,4))
+```
+(b) he bets, each time, as much as possible but not more than necessary to
+bring his fortune up to 8 dollars (bold strategy)
+
+p(3) = 0.4p(6)
+
+p(6) = 0.4p(8) + 0.6p(4)
+
+p(4) = 0.4p(8)
+
+p(0) = 0
+
+p(8) = 1
+
+solve and find
+p(3) = 0.256, p(4) = 0.4, p(6) = 0.64
+
+(c) By comparing the third components of the vector φ we find that the bold strategy gives Smith a better chance to get out jail
+
+```{r}
+dbinom(3,3,0.4)
+```
+
+
+
+
+

@@ -1,0 +1,53 @@
+---
+title: "Assignment Week 9"
+author: "Peter Gatica"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(matlib)
+```
+
+#### 1.  Exercise 11. The price of one share of stock in the Pilsdorff Beer Company (see Exer- cise 8.2.12) is given by Yn on the nth day of the year. Finn observes that the differences Xn = Yn+1 − Yn appear to be independent random variables with a common distribution having mean μ = 0 and variance σ2 = 1/4. If Y1 = 100, estimate the probability that Y365 is
+(a) ≥ 100.
+
+$$  P(S^{\times }_{365}>=100)\approx NA(\frac{j+\frac{1}{2} -np}{\sqrt{npq} }  $$
+$$ =NA(\frac{365+\frac{1}{2} -365\times 0027}{\sqrt{365\times .0027\times .9973} } ) $$
+????
+
+(b) ≥ 110.
+(c) ≥ 120.
+
+
+#### 2. Calculate the expected value and variance of the binomial distribution using the moment
+#### generating function.  From page 367
+
+$$ px(j)=\binom{n}{j} p^{j}q^{n-j}for\  0\leq j\leq n\  (binomial\  distribution)\ then $$
+$$  g(t)=\sum^{n}_{j=0} e^{tj}\binom{n}{j} p^{j}q^{n-j} $$
+$$ =\sum^{n}_{j=0} \binom{n}{j} (pe^{t})^{j}q^{n-j} $$
+$$ =(pe^{t}+q)^{n} $$
+Note that
+$$ \mu_{1} =g\prime (0)=n(pe^{t}+q)^{n-1}pe^{t}\mid_{t=0} =np,$$
+$$ \mu_{2} =g^{\prime \prime }(0)=n(n-1)p^{2}+np, $$
+
+$$ so\  that\  \mu =\mu_{1} =np,and\  \sigma^{2} =\mu_{2} -\mu^{2}_{1} =np(1-p),as\  expected. $$
+
+#### 3. Calculate the expected value and variance of the exponential distribution using the moment
+#### generating function. From Example 10.16 pg 395
+
+Let X have range [0,∞) and density function fX(x) = λe−λx (exponential density with parameter λ). In this case 
+$$ \mu_{n} =\int^{\infty }_{0} x^{n}\lambda e^{-\lambda x}dx=\lambda (-1)^{n}\frac{d^{n}}{d\lambda^{n} } \int^{\infty }_{0} e^{-\lambda x}dx $$
+$$ g(t)=\sum^{\infty }_{k=0} \frac{\mu_{k} t^{k}}{k!} $$
+$$ =\sum^{\infty }_{k=0} [\frac{t}{\lambda } ]^{k}=\frac{\lambda }{\lambda -t} . $$
+Here the series converges only for |t| < λ. Alternatively, we have
+$$ g(t)=\int^{\infty }_{0} e^{tx}\lambda e^{-\lambda x}dx $$
+$$ =\frac{\lambda e^{(t-\lambda )x}}{t-\lambda } |^{\infty }_{0}=\frac{\lambda }{\lambda -t}  $$
+Now we can verify directly that
+ $$ \mu_{n} =g^{(n)}(0)=\frac{\lambda n!}{(\lambda -t)^{n+1}} |_{t=0}=\frac{n!}{\lambda^{n} } . $$
+
+

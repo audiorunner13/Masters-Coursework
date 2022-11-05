@@ -1,0 +1,110 @@
+---
+title: "Markov Chains"
+author: "Peter Gatica"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r }
+library(expm)
+library(markovchain)
+library(diagram)
+library(pracma)
+```
+
+```{r}
+(stateNames <- c("Rain","Nice","Snow"))
+(Oz <- matrix(c(.5,.25,.25,.5,0,.5,.25,.25,.5),nrow=3, byrow=TRUE))
+```
+
+```{r}
+row.names(Oz) <- stateNames
+colnames(Oz) <- stateNames
+(Oz)
+```
+```{r}
+plotmat(Oz,pos = c(1,2),
+        lwd = 1, box.lwd = 2,
+        cex.txt = 0.8,
+        box.size = 0.1,
+        box.type = 'circle',
+        box.prop = 0.5,
+        box.col = 'light yellow',
+        arr.length=.1,
+        arr.width=.1,
+        self.cex = .4,
+        self.shifty = -.01,
+        self.shiftx = .13,
+        main = '')
+
+```
+```{r}
+# Multiply the matrix by the power of 3
+Oz3 <- Oz %^% 3
+round(Oz3,3)
+```
+This next block of code reproduces the 5-state Drunkward’s walk example from section 11.2 which presents the fundamentals of absorbing Markov chains. First, the transition matrix describing the chain is instantiated as an object of the S4 class makrovchain. Then, functions from the markovchain package are used to identify the absorbing and transient states of the chain and place the transition matrix, P, into canonical form.
+
+```{r}
+p <- c(.5,0,.5)
+# (dw <- c(1,rep(0,4),p,0,0,0,p,0,0,0,p,rep(0,4),1))
+dw <- c(1,rep(0,4),p,rep(0,3),p,rep(0,3),p,rep(0,4),1)
+(DW <- matrix(dw,5,5,byrow=TRUE))
+```
+```{r}
+(DWmc <-new('markovchain', transitionMatrix = DW, states = c("0","1","2","3","4"),name = "Drunkard's Walk"))
+```
+```{r}
+# Determine transient states
+(transientStates(DWmc))
+```
+```{r}
+# determine absorbing states
+(absorbingStates(DWmc))
+```
+
+Canonical form
+
+In canonical form, the transition matrix, P, is partitioned into the Identity matrix, I, a matrix of 0’s, the matrix Q, containing the transition probabilities for the transient states and a matrix R, containing the transition probabilities for the absorbing states.
+
+Next, we find the Fundamental Matrix, N, by inverting (I – Q). For each transient state, j, nij gives the expected number of times the process is in state j given that it started in transient state i.  ui is the expected time until absorption given that the process starts in state i. Finally, we compute the matrix B, where bij is the probability that the process will be absorbed in state J given that it starts in state i.
+
+
+```{r}
+p <- c(.5,0,.5)
+p_dw <- c(0,p,0,p,rep(0,3),.5,0,0,.5,rep(0,3),1,rep(0,5),1)
+P <- matrix(p_dw,5,5,byrow=TRUE)
+(Pmc <-new('markovchain', transitionMatrix = P, states = c("1","2","3","0","4"),name = "Drunkard's Walk Canonical Form"))
+```
+```{r}
+(Q <- Pmc[1:3,1:3])
+```
+```{r}
+(I <- diag(dim(Q)[2]))
+```
+```{r}
+(I-Q)
+```
+
+```{r}
+(N <- solve(I-Q))
+```
+
+```{r}
+(R <- Pmc[1:3,4:5])
+```
+```{r}
+(B <- N %*% R)
+```
+```{r}
+# Determine transient states
+(transientStates(Pmc))
+```
+```{r}
+# determine absorbing states
+(absorbingStates(Pmc))
+```
