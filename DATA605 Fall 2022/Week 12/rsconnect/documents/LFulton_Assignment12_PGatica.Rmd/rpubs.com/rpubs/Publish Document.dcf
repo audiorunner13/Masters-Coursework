@@ -1,0 +1,11 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/970104/bfde86d98e0547c982e714dd86d8fbff
+bundleId: https://api.rpubs.com/api/v1/document/970104/bfde86d98e0547c982e714dd86d8fbff
+url: http://rpubs.com/audiorunner13/970104
+when: 1668387631.88061
+lastSyncTime: 1668387631.88062

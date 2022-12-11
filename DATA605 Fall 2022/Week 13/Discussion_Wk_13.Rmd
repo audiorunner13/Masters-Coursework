@@ -1,0 +1,65 @@
+---
+title: "Discussion Week 13"
+author: "Peter Gatica"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(matlib)
+```
+
+## Exercise 4.2.10 pg 179
+
+### A boat is being pulled into a dock at a constant rate of 30ft/min by a winch located 10ft above the deck of the boat.  At what rate is the boat approaching the dock when the boat is:
+
+#### We will use the following formula to calculate each solution.
+$$ 2A\frac{dA}{dt} +2B\frac{dB}{dt} =2C\frac{dC}{dt} $$
+
+#### We have values for evrything except for 
+$$ \frac{dB}{dt} $$
+
+#### which we solve for by 
+$$ \frac{dB}{dt} =\frac{C\frac{dC}{dt} -A\frac{dA}{dt} }{B} $$
+
+#### (a) 50 feet out? 30.59412 ft/min
+```{r}
+A <- 10
+B <- 50
+C <- sqrt(A^2+B^2)
+dCdt <- -30
+dAdt <- 0
+
+(dBdt <- ((C*dCdt)-(A*dAdt))/B)
+```
+
+#### (b) 15 feet out? 36.0555 ft/min
+```{r}
+A <- 10
+B <- 15
+C <- sqrt(A^2+B^2)
+dCdt <- -30
+dAdt <- 0
+
+(dBdt <- ((C*dCdt)-(A*dAdt))/B)
+```
+
+#### (c) 1 foot from the dock? 301.4963 ft/min
+```{r}
+A <- 10
+B <- 1
+C <- sqrt(A^2+B^2)
+dCdt <- -30
+dAdt <- 0
+
+(dBdt <- ((C*dCdt)-(A*dAdt))/B)
+```
+
+#### (d) What happens when the length of rope pulling in the boat is less that 10 feet long?  
+
+#### The boat will be right up against the dock and possibly being lifted out of the water from the bow of the boat or you must lower the height of the winch to use less that 10 feet of rope.
+

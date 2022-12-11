@@ -1,0 +1,14 @@
+---
+title: "DATA 605 Assignment Week 14"
+author: "Peter Gatica"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(pracma)
+```
+

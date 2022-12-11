@@ -1,0 +1,102 @@
+---
+title: "LFulton_Assignment12_PGatica"
+author: "Peter Gatica"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE}
+library(tidyverse)
+```
+
+##### The attached who.csv dataset contains real-world data from 2008. The variables included follow.
+#####   Country: name of the country
+#####   LifeExp: average life expectancy for the country in years
+#####   InfantSurvival: proportion of those surviving to one year or more
+#####   Under5Survival: proportion of those surviving to five years or more
+#####   TBFree: proportion of the population without TB.
+#####   PropMD: proportion of the population who are MDs
+#####   PropRN: proportion of the population who are RNs
+#####   PersExp: mean personal expenditures on healthcare in US dollars at average exchange rate
+#####   GovtExp: mean government expenditures per capita on healthcare, US dollars at average exchange rate
+#####   TotExp: sum of personal and government expenditures.
+
+```{r}
+who_src = read.csv('who.csv', header = TRUE)
+
+head(who_src)
+```
+
+1. Provide a scatterplot of LifeExp~TotExp, and run simple linear regression. Do not transform the
+variables. Provide and interpret the F statistics, R^2, standard error,and p-values only. Discuss
+whether the assumptions of simple linear regression met.
+
+```{r}
+plot(who_src$TotExp, who_src$LifeExp, xlab='TotalExpenditure', ylab='LifeExpectancy', main='scatterplot')
+```
+```{r}
+(who_src_lm <- lm(LifeExp ~ TotExp,data = who_src))
+```
+```{r}
+plot(who_src$TotExp, who_src$LifeExp, xlab='TotalExpenditure', ylab='LifeExpectancy', main='scatterplot')
+abline(who_src_lm, col='red')
+```
+This doesn't appear to be a good fit because not many observations fall near the abline which suggests that there is not a good correlation between life expectancy and total expenditures.
+
+```{r}
+summary(who_src_lm)
+```
+The median is high and the range is not consistent around the median.  The residual standard error of 9.371 on 188 degrees of freedom seems high suggesting that even countries and their citizens that have a low total expenditure may still have a high life expectancy.  This model does not support that thought.
+
+2. Raise life expectancy to the 4.6 power (i.e., LifeExp^4.6). Raise total expenditures to the 0.06 power (nearly a log transform, TotExp^.06). Plot LifeExp^4.6 as a function of TotExp^.06, and re-run the simple regression model using the transformed variables. Provide and interpret the F statistics, R^2, standard error, and p-values. 
+Which model is "better?"
+
+```{r}
+LifeExp_2 = who_src$LifeExp^4.6
+TotExp_2 = who_src$TotExp^0.06
+
+plot(TotExp_2, LifeExp_2, xlab = 'TotalExpenditure', ylab='LifeExpentancy',  main='scatterplot', col=1)
+life_tot_lm <- lm(LifeExp_2 ~ TotExp_2)
+abline(life_tot_lm, col=2)
+```
+```{r}
+(life_tot_lm)
+```
+
+Raising the life expectancy and total expenditures makes this regression model a better fit.  Notice how the observations now align more closely to the abline.
+
+```{r}
+summary(life_tot_lm)
+```
+The R-squared of 0.7298 and the ddjusted R-squared of 0.7283 has increased significantly which means that the values explain 73% of the variance.  The low p-value still suggests that there is not a correlation between the total expenditures and life expectancy in this model.
+
+3. Using the results from 3, forecast life expectancy when TotExp^.06 =1.5. Then forecast life
+expectancy when TotExp^.06=2.5.
+
+```{r}
+LifeExp_46 = -736527909 +  620060216 * 1.5
+(LifeExp_15 = exp(log(LifeExp_46)/4.6))
+```
+```{r}
+LifeExp_46 = -736527909 +  620060216 * 2.5
+(LifeExp_25 = exp(log(LifeExp_46)/4.6))
+```
+4. Build the following multiple regression model and interpret the F Statistics, R^2, standard error,
+and p-values. How good is the model?  LifeExp = b0+b1 x PropMd + b2 x TotExp +b3 x PropMD x TotExp
+
+```{r}
+(prob4_lm <- lm(LifeExp ~ TotExp + PropMD + PropMD * TotExp,data = who_src))
+```
+```{r}
+summary(prob4_lm)
+```
+5. Forecast LifeExp when PropMD=.03 and TotExp = 14. Does this forecast seem realistic? Why
+or why not?
+```{r}
+(fcst_lfexp <- 62.8 + (.000072 * 14) + (1497 *.03) + (.006 * 14 * .03))
+```
+An increase in life expectancy to 108 years doesn't seem possible even if the expenditures increases and you increase the number of doctors by 3%.

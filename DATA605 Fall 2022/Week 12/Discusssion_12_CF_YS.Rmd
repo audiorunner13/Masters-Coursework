@@ -1,0 +1,97 @@
+---
+title: "Discussion Week 11"
+author: "Peter Gatica"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE}
+# Load needed libraries
+library(tidyverse)
+library(readr)
+library(knitr)
+library(sqldf)
+```
+
+## Do other factors affect Home Run Distance besides exit velocity?
+##### In my last discussion I am created a simple model to show if there is a direct correlation with the exit velocity of a ball hit out of the park and the distance that it travels.  My conclusion was that there is.  In this discussion I will add the other measures to determine if those also affect the distance of a homerun. I will limit the data to home runs hit out of Coors Field in Denver and Yankee Stadium for better clarity.
+
+```{r message=FALSE}
+filename <- tempfile()
+download.file("https://raw.githubusercontent.com/audiorunner13/Masters-Coursework/main/DATA605%20Fall%202022/Week%2011/HR%20Tracker.csv",filename)
+
+```
+```{r}
+hr_stad_CFYS_2017 <- read.csv.sql(filename, "select TRUE_DISTANCE, EXIT_VELOCITY, ELEVATION_ANGLE, HORIZONTAL_ANGLE, APEX, BALLPARK  from file where GAME_DATE > '2017-04-01' and EXIT_VELOCITY > 70 and BALLPARK IN ('Coors Field','Yankee Stadium')", sep=",")
+```
+
+The stadium will be my dichotimus variable.
+```{r}
+coors_bp <- ifelse(hr_stad_CFYS_2017$BALLPARK == 'Coors Field', 1, 0)
+
+hr_stad_CFYS_2017_out <- data.frame(TRUE_DISTANCE = hr_stad_CFYS_2017$TRUE_DISTANCE, EXIT_VELOCITY = hr_stad_CFYS_2017$EXIT_VELOCITY, ELEVATION_ANGLE = hr_stad_CFYS_2017$ELEVATION_ANGLE , HORIZONTAL_ANGLE = hr_stad_CFYS_2017$HORIZONTAL_ANGLE, APEX = hr_stad_CFYS_2017$APEX)
+head(hr_stad_CFYS_2017_out,10)
+```
+```{r}
+pairs(hr_stad_CFYS_2017_out, gap=0.5, panel = panel.smooth, main = "Home Run data", col = 3 + (coors_bp))
+```
+
+From the pairs view we can see that the elevation angle of the ball's trajectory has a negative impact on distance.  I'll now create a multiple regression model to determine how the othr factors come into play.
+```{r}
+(hr_stad_CFYS_2017_lm <- lm(TRUE_DISTANCE ~ EXIT_VELOCITY + ELEVATION_ANGLE + HORIZONTAL_ANGLE + APEX , data = hr_stad_CFYS_2017_out))
+summary(hr_stad_CFYS_2017_lm)
+```
+
+Since horizontal angle p-value > .05, let's remove that factor and recalculate.
+```{r}
+(hr_stad_CFYS_2017_lm <- lm(TRUE_DISTANCE ~ EXIT_VELOCITY + ELEVATION_ANGLE + APEX , data = hr_stad_CFYS_2017_out))
+summary(hr_stad_CFYS_2017_lm)
+```
+Now that all p-values are below .05, I am still not confortable to call this a good model but let's analyze the residuals.  
+```{r}
+residuals <- resid(hr_stad_CFYS_2017_lm)
+plot(residuals)
+```
+```{r}
+hist(residuals)
+```
+
+```{r}
+qqnorm(resid(hr_stad_CFYS_2017_lm))
+qqline(resid(hr_stad_CFYS_2017_lm))
+```
+
+After removing the horizontal angle factor and plotting the residuals, it appears to have a normal distribution but the histogram shows a skew to the right.  I will select the elevation angle as my quadratic variable because of it's negative affect on the distribution and recalculate.
+```{r}
+elevation_sq <- hr_stad_CFYS_2017_out$ELEVATION_ANGLE ^ 2
+```
+
+```{r}
+(hr_stad_CFYS_2017_lm_2 <- lm(TRUE_DISTANCE ~ EXIT_VELOCITY + ELEVATION_ANGLE + APEX + elevation_sq, data = hr_stad_CFYS_2017_out))
+summary(hr_stad_CFYS_2017_lm_2)
+```
+After doing so, you'll notivce the median is now very close to 0 and the min/max range seems to have improved.  Plotting the residuals does seem to show more of a normal distribution in all plots below.
+
+```{r}
+residuals <- resid(hr_stad_CFYS_2017_lm_2)
+plot(residuals)
+```
+```{r}
+hist(residuals)
+```
+
+```{r}
+plot(fitted(hr_stad_CFYS_2017_lm),resid(hr_stad_CFYS_2017_lm))
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(hr_stad_CFYS_2017_lm)
+```
+
