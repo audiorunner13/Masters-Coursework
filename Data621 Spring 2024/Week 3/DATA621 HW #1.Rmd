@@ -1,0 +1,259 @@
+---
+title: 'DATA621 HW #1'
+author: "Farhana Akther"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Overview:
+
+In this homework assignment, you will explore, analyze and model a data set containing 
+approximately 2200 records. Each record represents a professional baseball team from the years 1871 
+to 2006 inclusive. Each record has the performance of the team for the given year, with all of the 
+statistics adjusted to match the performance of a 162 game season.
+
+Your objective is to build a 'multiple linear regression model' on the 'training data' to predict the 
+number of wins for the team. You can only use the variables given to you (or variables that you 
+derive from the variables provided). Below is a short description of the variables of interest in 
+the data set:
+
+![](moneyball.jpg)
+
+# Introduction: 
+
+In this specific problem, two datasets—training and testing—are provided for the Baseball game. The objective of this study is to delve into the training dataset by examining its dimensions, conducting descriptive summary statistics, plotting various features against the target variable, and assessing the correlation between them. Subsequently, we need to preprocess our dataset to prepare it for model training, addressing any missing values and outliers. Once the data is prepared, we can proceed to create different models using the features that exhibit greater statistical significance. After training the model, we will utilize the testing dataset to predict the target variable. Therefore, without further ado, let's commence this session with data exploration.
+
+
+# 1. Data Exploration:
+
+In this first step, we're going to look closely at the training data set to understand it better before we start preparing or modeling. Exploring the data helps us figure out what it's all about. Since the dataset is about a baseball game, where there are often misunderstandings about what actually makes a team win, it's our job as data scientists to find out the real factors that affect how well a team does using past data. To do that, we need to really know the data we're working with. That's why exploring the data is so important for the whole modeling process. So, let's begin by loading the dataset into our markdown.
+
+
+## Loading Data:
+
+The datasets (training and evaluation) has been uploaded to a GitHub repository, from which it has been loaded into the markdown using the code chunk provided below. The rationale behind uploading it to GitHub is to maintain the reproducibility of the work.
+
+```{r Data Importation}
+mb_evaluation <- read.csv("https://raw.githubusercontent.com/FarhanaAkther23/DATA621/main/moneyball-evaluation-data.csv", header=TRUE, sep=",")
+mb_training <- read.csv("https://raw.githubusercontent.com/FarhanaAkther23/DATA621/main/moneyball-training-data.csv", header=TRUE, sep=",")
+```
+
+
+### Data Dimension:
+The dimension of our data in the training data set consists of 2276 observation and 17 variables. 
+
+```{r}
+dim(mb_training)
+```
+
+### Data set structure
+
+```{r}
+str(mb_training)
+```
+
+Data structure also shows the number of observation 2276 as well as the 17 variables. we call also see that all the observations are integer. there are some N/As. 
+
+## Descriptive Summary Statistics:
+```{r}
+summary(mb_training)
+```
+
+As we can see that the table above gave us the summary for INDEX column too. we will remove this from our data set as we are not going to use this on our analysis. The code chunk below remove the redundant INDEX column from our data set.
+
+```{r}
+training <- mb_training[,-1]
+dim(training)
+```
+
+## Loading libraries:
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(GGally)
+library(psych)
+library(reshape2)
+```
+
+## Plotting the Target Column:
+
+```{r}
+ggplot()+
+  geom_histogram(data = training, mapping = aes(x=TARGET_WINS), bins = 50, color = "black", fill = "grey")+geom_vline(xintercept=mean(training$TARGET_WINS), color='red')+labs(x="Target Wins", y="Count",title ="Distribution of Target Wins")+theme_bw()
+```
+
+The distribution of TARGET_WINS appears to be fairly normal, with a mean of around 80.8 (indicated by the red vertical line), a minimum of 0, and a maximum of 146. However, the presence of a minimum value of 0 is concerning, as it is highly unusual for a team to have zero wins. This suggests that there may be some data inconsistencies that need to be addressed. It would be advisable to revisit the summary statistics for the TARGET_WINS column to validate the observations mentioned above.
+
+```{r}
+summary(training$TARGET_WINS)
+```
+
+```{r}
+colnames(training)
+```
+
+```{r}
+hist(training$TARGET_WINS) 
+```
+
+
+#### Finding Correlation using ggpairs(): 
+
+let's look at the relationships between all variables using the following command:
+
+```{r warning=FALSE, message=FALSE}
+ggpairs(training [,  c(1, 2:5)]) 
+```
+
+
+```{r warning=FALSE, message=FALSE}
+ggpairs(training [,  c(1, 6:9)]) 
+```
+
+```{r warning=FALSE, message=FALSE}
+ggpairs(training [,  c(1, 10:13)]) 
+```
+
+
+```{r warning=FALSE, message=FALSE}
+ggpairs(training [,  c(1, 13:16)]) 
+```
+
+
+
+### Missing Values:
+
+Let’s check out the missing values in the columns. We will check the number of missing values in each column using the code check below:
+
+```{r}
+(colSums(is.na(training)))
+```
+
+# 2. Data Preparation:
+
+## Missing Values and Outliers:
+
+As we saw in the data exploration section,  our data does contains missing values and outliers that we need to consider. We will try to address both missing values and outliers accordingly.
+
+### Removing Missing values:
+
+Earlier, we noticed that certain feature columns, such as TEAM_BATTING_HBP, TEAM_BASERUN_CS, and TEAM_FIELDING_DP, contain a lot of  missing values. It would be reasonable to exclude these columns from our dataset rather than trying to replace the missing values. Doing so can help us avoid potential issues related to accuracy and bias in our analysis.
+
+```{r}
+training <- training[, !names(training) %in% c('TEAM_BATTING_HBP','TEAM_BASERUN_CS','TEAM_FIELDING_DP')]
+dim(training)
+```
+
+#### Impute Missing values:
+
+Let’s check out the remaining features for missing values
+
+
+```{r}
+(colSums(is.na(training)))
+```
+From the data above, it's evident that the columns 'TEAM_BATTING_SO', 'TEAM_BASERUN_SB', and 'TEAM_PITCHING_SO' contain some missing values, totaling 102 instances, which roughly corresponds to 4.5% of the entire dataset. In addressing these missing values, we will opt to replace them with the 'median' of their respective columns. This choice is motivated by the skewness observed in the distribution, as medians are less influenced by skewness compared to other measures.
+
+```{r}
+training$TEAM_BATTING_SO[is.na(training$TEAM_BATTING_SO)] <- median(training$TEAM_BATTING_SO, na.rm = TRUE)
+training$TEAM_BASERUN_SB[is.na(training$TEAM_BASERUN_SB)] <- median(training$TEAM_BASERUN_SB, na.rm = TRUE)
+training$TEAM_PITCHING_SO[is.na(training$TEAM_PITCHING_SO)] <- median(training$TEAM_PITCHING_SO, na.rm = TRUE)
+```
+
+
+#### Fixing Outliers:
+
+Looking at the summary and the plots below we see that 'PITCHING_H', 'PITCHING_BB', 'PITCHING_SO', and 'FIELDING_E' are all skewed due to the outliers. We also have some fields with a few missing values. we can fix these is to pick any value that is 3 standard deviations above the mean and impute them as the median.
+
+```{r}
+training$TEAM_PITCHING_H[training$TEAM_PITCHING_H > 3*sd(training$TEAM_PITCHING_H)] <- median(training$TEAM_PITCHING_H)
+training$TEAM_PITCHING_BB[training$TEAM_PITCHING_BB > 3*sd(training$TEAM_PITCHING_BB)] <- median(training$TEAM_PITCHING_BB)
+training$TEAM_PITCHING_SO[training$TEAM_PITCHING_SO > 3*sd(training$TEAM_PITCHING_SO)] <- median(training$TEAM_PITCHING_SO)
+training$TEAM_FIELDING_E[training$TEAM_FIELDING_E > 3*sd(training$TEAM_FIELDING_E)] <- median(training$TEAM_FIELDING_E)
+```
+
+
+## Distribution Check:
+
+```{r}
+ggplot(melt(training), aes(x=value)) + geom_histogram(color = 'black', fill = 'grey') + facet_wrap(~variable, scale='free') + labs(x='', y='Frequency')+theme_bw()
+```
+
+
+
+#3. Building Models: 
+
+We will start with a full model that predicts  the number of win based on all the factors. 
+
+
+```{r}
+m1 <- lm(TARGET_WINS ~., training)
+summary(m1)
+```
+As we cans see that TEAM_PITCHING_HR has a very high p-value which means that it is not statistically significant and it will be in our best interest to remove it from our model. Below are the plots which shows residuals vs fitted values, QQ plot, residuals distributions, standardized residuals and residuals vs leverage.
+
+```{r}
+par(mfrow=c(2,2))
+plot(m1)
+hist(resid(m1), main="Histogram of Residuals")
+```
+to be continue... 
+
+https://stackoverflow.com/questions/26623303/is-there-any-package-and-function-that-produce-this-image-in-r
+
+https://www.rdocumentation.org/packages/GGally/versions/2.2.0/topics/ggpairs 
+
+https://www.r-bloggers.com/2021/06/ggpairs-in-r-a-brief-introduction-to-ggpairs/
+
+https://stackoverflow.com/questions/72152164/ggpairs-color-by-group-but-single-regression-line
+
+From Peter Gatica
+#####
+
+```{r}
+coef(m1)
+```
+
+
+```{r}
+ggplot(training,aes(x=TEAM_BATTING_H,y=TARGET_WINS)) + 
+  geom_point() + geom_smooth(method = 'lm', se = FALSE, color='red')
+```
+
+```{r}
+ggplot(training,aes(x=TEAM_BATTING_HR,y=TARGET_WINS)) + 
+  geom_point() + geom_smooth(method = 'lm', se = FALSE, color='red')
+```
+
+```{r}
+ggplot(training,aes(x=TEAM_BATTING_BB,y=TARGET_WINS)) + 
+  geom_point() + geom_smooth(method = 'lm', se = FALSE,, color='red')
+```
+
+```{r}
+ggplot(training,aes(x=TEAM_PITCHING_H,y=TARGET_WINS)) + 
+  geom_point() + geom_smooth(method = 'lm', se = FALSE, color='red')
+```
+
+```{r}
+ggplot(training,aes(x=TEAM_PITCHING_H,y=TARGET_WINS)) + 
+  geom_point() + geom_smooth(method = 'lm', se = FALSE, color='red')
+```
+
+```{r}
+ggplot(training,aes(x=TEAM_FIELDING_E,y=TARGET_WINS)) + 
+  geom_point() + geom_smooth(method = 'lm', se = FALSE, color='red')
+```
+
+```{r}
+ggplot(training,aes(x=TEAM_BATTING_SO,y=TARGET_WINS)) + 
+  geom_point() + geom_smooth(method = 'lm', se = FALSE, color='red')
+```
+
+I am currently working on how to predict Target wins for the evaluation dataset.
+
+End Peter Gatica
+######################
