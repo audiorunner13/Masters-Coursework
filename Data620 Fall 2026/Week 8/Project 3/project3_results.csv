@@ -1,0 +1,10 @@
+version,description,devtest_accuracy,change_from_prev,timestamp
+v1,last letter (baseline),0.754,0.0,2026-11-03 18:17:58
+v2,+ first letter,0.754,0.0,2026-11-03 18:17:58
+v3,+ last two letters,0.782,0.028,2026-11-03 18:17:58
+v4,"+ last three letters, length",0.792,0.01,2026-11-03 18:17:58
+v5,+ letter presence (a-z),0.806,0.014,2026-11-03 18:17:58
+v6d,"+ penultimate, double letter in tail, short -y/-ie",0.802,-0.004,2026-11-03 19:27:10
+v7a,"MaxEnt (GIS, 15 iter) on v5 features",0.794,-0.008,2026-11-03 20:20:42
+v7b,"MaxEnt (GIS, 40 iter) on v5 features",0.8,0.006,2026-11-03 20:21:22
+v7b,"MaxEnt (GIS, 40 iter) on v5 features",0.8,0.0,2026-11-03 20:21:48
